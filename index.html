@@ -2186,6 +2186,7 @@ LUMI_TRIP.sky.push([[4,'Your sky is so busy. Clouds, birds, planes...'],[1,'And 
 /* ---------- loop ---------- */
 const up=new THREE.Vector3(), off=new THREE.Vector3(), target=new THREE.Vector3(), qFrame=new THREE.Quaternion(), qSway=new THREE.Quaternion(), eul=new THREE.Euler();
 const railDot=$('railDot'), altValue=$('altValue');
+let balloonShadows=null;
 let last=performance.now(), time=0, nextShooter=6, lastAltText='', doorOpen=0, landT=0, nightK=0, marksPlaced=false, followK=0;
 function frame(now){
   const rawDt=Math.min(0.05,(now-last)/1000); last=now; idle+=rawDt;
@@ -2212,6 +2213,7 @@ function frame(now){
     b.grp.rotation.z=Math.sin(time*0.5+ph)*0.08*motion;
     strPos.set([ANCHOR.x,ANCHOR.y,ANCHOR.z,b.grp.position.x,b.grp.position.y-b.s-0.12,b.grp.position.z],i*6); }
   strGeo.attributes.position.needsUpdate=true;
+  { const castB=!(state.landed||u>0.97); if(balloonShadows!==castB){ balloonShadows=castB; balloons.forEach(b=>b.grp.traverse(o=>{ if(o.isMesh) o.castShadow=castB; })); } }
 
   /* the sisters, and the door they keep using */
   ALL.forEach(b=>{ if(b.active) updateBrain(b,dt); });
