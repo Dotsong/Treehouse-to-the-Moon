@@ -296,8 +296,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
     <h2>Home for dinner</h2>
     <p class="lede" id="finaleLede">June and Pip floated to the Moon and back, and still made it home before the spaghetti got cold. The end.</p>
     <div class="row">
-      <button class="primary" id="againFinal" type="button">Fly again</button>
-      <button id="goodnightBtn" type="button">Goodnight</button>
+      <button class="primary" id="goodnightBtn" type="button">Good Night</button>
     </div>
   </div>
 </section>
@@ -1343,7 +1342,6 @@ $('againSmall').addEventListener('click',()=>flyAgain(false));
 $('stayBtn').addEventListener('click',()=>{ hideEnding(); $('homeSmall').hidden=false; });
 $('homeBtn').addEventListener('click',()=>callHome());
 $('homeSmall').addEventListener('click',()=>callHome());
-$('againFinal').addEventListener('click',()=>flyAgain(false));
 $('goodnightBtn').addEventListener('click',()=>flyAgain(true));
 function onLand(){ placeBucket(false); hushBubbles(); speak(['We landed!','On the MOON!'],0); together([{pose:'hop',dur:3},{pose:'wave',dur:3.5}],[-0.65,0.55]);
   BRAINS.forEach((b,i)=>{ const spot=i?[3.6,6.4]:[-2.4,7.0]; b.queue.push(...stepsTo(b.target,'deck',spot),{k:'pose',pose:i?'moonhop':'flag',dur:5.5,face:i?0.4:-0.3}); b.target=spot; }); setTimeout(()=>{ if(!state.landed) return; const en=$('ending'); en.hidden=false; requestAnimationFrame(()=>en.classList.remove('gone')); capEl.classList.remove('show'); },3500); }
