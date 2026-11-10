@@ -285,7 +285,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
     <p class="story-kicker">Chapter one</p>
     <h1>Treehouse to the Moon</h1>
     <p>Every night, June and her little sister Pip say goodnight to the Moon from their treehouse in the old oak. And every night, Pip asks the same question: <em>&ldquo;What do you think it&rsquo;s like up there?&rdquo;</em></p>
-    <p>Tonight they&rsquo;re going to find out. For a whole year they saved every balloon from every birthday party. Their best friend Michelle is going to be so jealous. Now fifty balloons are tied to the roof, the cookies are packed, and dinner isn&rsquo;t until seven.</p>
+    <p>Tonight they&rsquo;re going to find out. For a whole year they saved every balloon from every birthday party. Now fifty of them are tied to the roof, the cookies are packed, and dinner isn&rsquo;t until seven.</p>
     <div class="row">
       <button class="primary" id="beginBtn" type="button">Lift off!</button>
       <p class="hint">Sound on &middot; drag to look around</p>
@@ -480,8 +480,6 @@ function moonTexture(){
 const moonTex=moonTexture();
 const moon=new THREE.Mesh(new THREE.SphereGeometry(MR,192,128),new THREE.MeshStandardMaterial({map:moonTex,bumpMap:moonTex,bumpScale:0.8,roughness:1,metalness:0,fog:false}));
 moon.position.copy(MC); scene.add(moon);
-const moonGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:spriteTex,color:0xfff2d8,transparent:true,opacity:0.35,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
-moonGlow.position.copy(MC); moonGlow.scale.setScalar(MR*4.2); moonGlow.renderOrder=-1; scene.add(moonGlow);
 
 /* landing site, oriented so Earth rises over the lunar horizon */
 const N=new THREE.Vector3(-1,-0.3,1).normalize();
@@ -1472,7 +1470,7 @@ const LINES={
   space:[['We\'re in SPACE.','Officially!'],'Earth looks like a big blue marble.',['Everything we know is down there.','Even my sneakers.'],'It\'s so quiet up here.',['Do balloons work in space?','Shh, don\'t tell them.']],
   long:[['Are we there yet?','Almost. Maybe. Kind of.'],['I can\'t wait to tell Michelle about this!','She\'s going to scream.'],'Nine thousand and one... nine thousand and two...',['I packed cookies for the Moon.','The chocolate chip ones?'],'Space smells like nothing.',['Let\'s name a star.','Sir Twinkles.'],'Best. Sleepover. Ever.'],
   almost:[['It\'s getting so BIG!','I call landing first!'],'Hello, Moon!',['Do you think it\'s made of cheese?','Only one way to find out.'],'Hold on tight, here we go!'],
-  landed:['Look at my footprints!',['Wait until we tell Michelle!','She\'s going to flip!'],['One small step for a girl...','One giant leap for sisters!'],['We made it!','We\'re moon girls now.'],['Look, Earth is rising!','Hi, Mom! Way down there!'],'Can we stay forever?',['Moon cookies, anyone?','Yes please!'],'My feet feel bouncy.','Everything is so sparkly and gray.']
+  landed:['Look at my footprints!',['One small step for a girl...','One giant leap for sisters!'],['We made it!','We\'re moon girls now.'],['Look, Earth is rising!','Hi, Mom! Way down there!'],'Can we stay forever?',['Moon cookies, anyone?','Yes please!'],'My feet feel bouncy.','Everything is so sparkly and gray.']
 };
 const POSE_LINES={peek:['Peekaboo!','Boo!','Can you see me?','Hiding!'],inside:['Where\'s my flashlight?','Cocoa break!','Getting my blanket!','I\'ll be right back!'],
   doorpeek:['Psst!','Is it my turn?','Peeking!'],hop:['Wheee!','Boing!'],spin:['Twirl!','Look, I\'m a ballerina!'],look:['So many stars...','That one\'s winking at me.'],
@@ -1489,7 +1487,7 @@ function playScript(lines){ script=lines.slice(); }
 Object.assign(LINES,{
   h_leave:[['Bye, Moon!','We\'ll come back soon!'],['Bye, moon castles!','Guard the Moon for us.'],'Goodbye, footprints!',['Bye, little flag!','Guard the Moon for us.'],'The Moon is getting smaller.'],
   h_space:[['Which way is home?','Follow the blue one.'],['Can we call Michelle when we get home?','She\'ll never believe us!'],'Earth is getting bigger!',['I\'m getting hungry.','Me too. Moon hungry.'],'I\'m going to tell my whole class.'],
-  h_long:['Look, it\'s our side of Earth.',['Michelle is going to be SO jealous.','We should bring her next time!'],['It\'s nighttime down there now.','The cities look like glitter!'],['Do you think Mom\'s worried?','Mom\'s ALWAYS worried.'],['That was the best day ever.','Best day in the whole universe.']],
+  h_long:['Look, it\'s our side of Earth.',['It\'s nighttime down there now.','The cities look like glitter!'],['Do you think Mom\'s worried?','Mom\'s ALWAYS worried.'],['That was the best day ever.','Best day in the whole universe.']],
   h_sky:['The stars came down to say goodnight.',['I can smell grass!','That means we\'re close.'],'The night is so dark and pretty.',['Are you sleepy?','Nope. Maybe. A little.']],
   h_clouds:[['Clouds are silvery at night.','Like moon pillows.'],'Brrr, chilly!',['I see streetlights!','Which one is ours?'],'Shh, everybody\'s asleep down there.'],
   h_low:[['I see our house!','And the porch light is on!'],['Is that Mom and Dad?','They\'re waving the lantern!'],'I hope it\'s spaghetti.']
@@ -1587,7 +1585,7 @@ const ARRIVE_SCRIPT=[[0,'We\'re home!'],[2,'There they are! Welcome home, girls!
 const CALL_SCRIPT=[[3,'There! I see the balloons!'],[2,'Girls! Dinner\'s almost ready!'],[0,'Mom! Dad! Hiiii!']];
 const HUG_SCRIPT=[[2,'My brave little astronauts!'],[0,'Mom, we went all the way to the Moon!'],[3,'Did you two remember your jackets? It\'s chilly up there.'],
   [1,'I did a hundred moon jumps!'],[2,'You can tell us everything over dinner.'],[3,'Spaghetti and meatballs. Your favorite.'],
-  [0,'Can Michelle come over? She LOVES spaghetti!'],[2,'I already called her mom. She\'s on her way.'],[1,'We\'re going to tell her EVERYTHING.'],
+  [0,'Can Michelle come over? She LOVES spaghetti!'],[2,'I already called her mom. She\'s on her way.'],
   [1,'Can we go to Mars tomorrow?'],[2,'Maybe after school. Now go wash your hands!']];
 function hugScript(){
   if(lumiB.active){ const h=[[2,'My brave little astronauts!'],[0,'Mom, we went all the way to the Moon!'],[4,'And I came all the way to Earth!'],
@@ -1600,10 +1598,10 @@ function hugScript(){
   if(bucketCount>0) h.splice(3,1,[1,`We brought you ${bucketCount} moon rock${bucketCount>1?'s':''}! They're in the bucket.`],[3,'Real moon rocks? Wow!']);
   if(castles.some(c=>c.done)) h.splice(h.length-2,0,[0,'And we built a castle on the Moon!']);
   return h; }
-const WALK_SCRIPT=[[1,'Race you inside!'],[0,'Save the most spaghetti for Michelle!'],[3,'Nobody run with spaghetti hands.']];
+const WALK_SCRIPT=[[1,'Race you inside!'],[0,'No fair, you started first!'],[3,'Nobody run with spaghetti hands.']];
 const CALL_SCRIPT_L=[[3,'There! I see the balloons!'],[2,'Girls! Dinner\'s almost ready!'],[0,'Mom! Dad! We brought a friend!'],[3,'A... friend?']];
 const ARRIVE_SCRIPT_L=[[0,'We\'re home!'],[2,'Welcome home, girls! And... who is this?'],[1,'This is Lumi! She lives on the Moon!'],[4,'Hello, Earth people!'],[3,'Well, hello, Lumi. Welcome to Earth!']];
-const WALK_SCRIPT_L=[[1,'Race you inside!'],[4,'Wait for me! Earth grass is so tickly!'],[0,'Save some spaghetti for Michelle!'],[3,'Nobody run with spaghetti hands.']];
+const WALK_SCRIPT_L=[[1,'Race you inside!'],[4,'Wait for me! Earth grass is so tickly!'],[3,'Nobody run with spaghetti hands.']];
 const toLocal=(x,z)=>[x-HOME.x,z-HOME.z];
 function callHome(){
   if(!state.landed||state.callHome) return;
@@ -2138,7 +2136,7 @@ function updateLumi(dt){
 /* lots more to talk about along the way */
 const MORE_LINES={
   yard:[['Hold on, Pip!','I AM holding on!'],'The oak tree is waving goodbye.',['Mom\'s going to look out the window...','...and we\'ll be a tiny dot!'],'Our treehouse can FLY!'],
-  low:[['There\'s our school!','No homework on the Moon!'],['Look, a soccer game!','They look like ants!'],'The river looks like a ribbon.',['Is that the town?','It looks like a toy village!'],['Wave to the cows!','Moo-oo!'],'Michelle\'s house is right down there!'],
+  low:[['There\'s our school!','No homework on the Moon!'],['Look, a soccer game!','They look like ants!'],'The river looks like a ribbon.',['Is that the town?','It looks like a toy village!'],['Wave to the cows!','Moo-oo!']],
   clouds:[['Is a cloud soft?','Only one way to find out.'],'I can see the mountains now!',['Clouds have shadows!','Like whales swimming on the ground.'],['My ears just popped!','Mine too! Pop!'],'It\'s getting chilly up here.'],
   above:[['Look how round the Earth is!','It really IS a ball!'],'The sky keeps getting darker.',['Where did the clouds go?','Way down there now.'],['How high are we?','Higher than the planes!'],'I can see the whole city from up here.'],
   space:[['I feel like an astronaut.','Astronauts don\'t have treehouses.'],['Is that a whole ocean?','It\'s so BIG.'],'Hi, satellites!',['Let\'s count the balloons.','Fifty! Still fifty.'],['Do you think aliens have treehouses?','The fancy ones do.'],'Earth is so pretty.'],
@@ -2147,7 +2145,7 @@ const MORE_LINES={
   landed:[['The Moon is so quiet.','Shh, you can hear your heart.'],['Race you to that crater!','A slow-motion race!'],'The ground is like powdered sugar.',['Do you think Michelle can see us?','Wave, just in case!'],['Our house is a tiny dot from here.','Somewhere on that blue ball.'],'I\'m the highest jumper in the universe!',['Is it daytime or nighttime here?','Both! The sky is black, but the sun is out.']],
   h_leave:[['Bye, Moon! Thanks for having us!','We\'ll write!'],'My shoes are full of moon dust.'],
   h_space:[['Should we tell Mom about the UFO?','She\'ll think we made it up.'],['That was the best trip ever.','The bestest.']],
-  h_long:[['Look, a city is turning on its lights.','Like birthday candles!'],'I want to tell Michelle everything all at once.'],
+  h_long:[['Look, a city is turning on its lights.','Like birthday candles!']],
   h_sky:[['Do you hear that?','The quiet? Me too.'],['I can see our town!','And the river!']],
   h_clouds:[['Cloud tunnel!','Wheee!'],'Almost home, almost home...'],
   h_low:[['Do you think there are meatballs?','There are ALWAYS meatballs.'],'Home sweet home!']
@@ -2162,7 +2160,6 @@ LUMI_MOON.push(
   [[4,'Do Earth kids play hopscotch every day?'],[0,'Only when it\'s not raining.'],[4,'What\'s raining?']]);
 LUMI_TRIP.space.push([[4,'My boulder looks so small now.'],[0,'You can visit it again!']]);
 LUMI_TRIP.sky.push([[4,'Your sky is so busy. Clouds, birds, planes...'],[1,'And lights!']]);
-LUMI_TRIP.low.push([[4,'Does Michelle like moon girls?'],[1,'She\'s going to love you!']]);
 
 /* ---------- loop ---------- */
 const up=new THREE.Vector3(), off=new THREE.Vector3(), target=new THREE.Vector3(), qFrame=new THREE.Quaternion(), qSway=new THREE.Quaternion(), eul=new THREE.Euler();
@@ -2226,7 +2223,6 @@ function frame(now){
   cloudMat.color.set(0xffffff).lerp(new THREE.Color(0x9aa4d4),nightK);
   const camEarth=camera.position.distanceTo(EC);
   atmo.visible=camEarth>ER*1.05; atmo.material.opacity=0.45*smooth(0.1,0.35,u);
-  moonGlow.material.opacity=lerp(0.32,0.12,smooth(0.5,0.95,u));
   updateEvents(dt,u);
 
   /* camera */
