@@ -1887,8 +1887,7 @@ const MARKDEFS=[
   {k:'footprints',at:o=>{ if(!state.landed||printIdx===0) return false; prints[(printIdx-1)%prints.length].getWorldPosition(o); o.addScaledVector(up,0.5); return 'w'; }},
   {k:'flag',at:o=>{ const f=flags.find(f=>f.visible); if(!f||!state.landed) return false; f.getWorldPosition(o); o.addScaledVector(up,1.9); return 'w'; }},
   {k:'rocks',at:o=>{ if(!state.landed) return false;
-    if(bucketCount>0&&bucket.visible){ bucket.getWorldPosition(o); o.addScaledVector(up,1.2); return 'w'; }
-    const pb=pebbles.find(p=>!p.taken&&!p.claimed); if(!pb) return false; pb.m.getWorldPosition(o); o.addScaledVector(up,0.7); return 'w'; }}
+    if(!bucket.visible) return false; bucket.getWorldPosition(o); o.addScaledVector(up,1.2); return 'w'; }}
 ];
 MARKDEFS.forEach(m=>{ const f=FACTS[m.k], w=document.createElement('div'); w.className='fm'; w.hidden=true;
   const b=document.createElement('button'); b.type='button'; b.className='fm-btn'; b.style.setProperty('--tint',f.tint);
