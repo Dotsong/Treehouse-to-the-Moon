@@ -297,6 +297,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
     <p class="lede" id="finaleLede">June and Pip floated to the Moon and back, and still made it home before the spaghetti got cold. The end.</p>
     <div class="row">
       <button class="primary" id="againFinal" type="button">Fly again</button>
+      <button id="goodnightBtn" type="button">Goodnight</button>
     </div>
   </div>
 </section>
@@ -1234,6 +1235,7 @@ const Music=(()=>{
   function impulse(sec,decay){const r=ctx.sampleRate,len=Math.floor(r*sec),b=ctx.createBuffer(2,len,r);
     for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}return b;}
   function start(){
+    if(ctx) return;
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
     ctx=new AC(); cur=CHORDS[0];
     master=ctx.createGain(); master.gain.value=0;
@@ -1326,17 +1328,23 @@ $('soundBtn').addEventListener('click',e=>{ const on=Music.toggle(); e.currentTa
 const PACES=[1,2,4];
 $('paceBtn').addEventListener('click',e=>{ state.pace=PACES[(PACES.indexOf(state.pace)+1)%PACES.length]; e.currentTarget.textContent='Pace '+state.pace+'×'; });
 function hideEnding(){ const en=$('ending'); en.classList.add('gone'); setTimeout(()=>en.hidden=true,1500); }
-function flyAgain(){
+function flyAgain(toStart){
   if(bookOpen) closeBook(); autoPaused=false; setPaused(false);
   const f=$('fade'); f.classList.add('on'); hideEnding(); $('againSmall').hidden=true; $('homeSmall').hidden=true; const fi=$('finale'); fi.classList.add('gone');
   setTimeout(()=>{ state.p=0; state.landed=false; chapterAt=-1; camTheta=-Math.PI/4; userPhi=0; zoom=1; capEl.classList.remove('show'); f.classList.remove('on');
-    hushBubbles(); resetEvents(); clearMoonMarks(); landT=0; resetHome(); placeGirls(); BRAINS.forEach(b=>{ b.cur=null; b.queue.push({k:'pose',pose:'wave',dur:13+Math.random()*2,face:0}); }); },950);
+    hushBubbles(); resetEvents(); clearMoonMarks(); landT=0; resetHome(); placeGirls();
+    if(toStart===true){ /* back to the opening storybook card */
+      state.started=false; prep=null; mooring.visible=true; idle=0; $('skipBtn').hidden=true; $('pauseBtn').hidden=true;
+      ['alt','rail','controls'].forEach(id=>$(id).classList.add('hud-off'));
+      const intro=$('intro'); intro.hidden=false; requestAnimationFrame(()=>intro.classList.remove('gone')); }
+    else BRAINS.forEach(b=>{ b.cur=null; b.queue.push({k:'pose',pose:'wave',dur:13+Math.random()*2,face:0}); }); },950);
 }
-$('againSmall').addEventListener('click',flyAgain);
+$('againSmall').addEventListener('click',()=>flyAgain(false));
 $('stayBtn').addEventListener('click',()=>{ hideEnding(); $('homeSmall').hidden=false; });
 $('homeBtn').addEventListener('click',()=>callHome());
 $('homeSmall').addEventListener('click',()=>callHome());
-$('againFinal').addEventListener('click',flyAgain);
+$('againFinal').addEventListener('click',()=>flyAgain(false));
+$('goodnightBtn').addEventListener('click',()=>flyAgain(true));
 function onLand(){ placeBucket(false); hushBubbles(); speak(['We landed!','On the MOON!'],0); together([{pose:'hop',dur:3},{pose:'wave',dur:3.5}],[-0.65,0.55]);
   BRAINS.forEach((b,i)=>{ const spot=i?[3.6,6.4]:[-2.4,7.0]; b.queue.push(...stepsTo(b.target,'deck',spot),{k:'pose',pose:i?'moonhop':'flag',dur:5.5,face:i?0.4:-0.3}); b.target=spot; }); setTimeout(()=>{ if(!state.landed) return; const en=$('ending'); en.hidden=false; requestAnimationFrame(()=>en.classList.remove('gone')); capEl.classList.remove('show'); },3500); }
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ Music.resume(); if(state.started) keepAwake(); } });
