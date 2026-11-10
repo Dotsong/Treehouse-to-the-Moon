@@ -270,7 +270,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
     <p class="story-kicker">Chapter one</p>
     <h1>Treehouse to the Moon</h1>
     <p>Every night, June and her little sister Pip say goodnight to the Moon from their treehouse in the old oak. And every night, Pip asks the same question: <em>&ldquo;What do you think it&rsquo;s like up there?&rdquo;</em></p>
-    <p>Tonight they&rsquo;re going to find out. For a whole year they saved every balloon from every birthday party. Now fifty of them are tied to the roof, the cookies are packed, and dinner isn&rsquo;t until seven.</p>
+    <p>Tonight they&rsquo;re going to find out. For a whole year they saved every balloon from every birthday party. Their best friend Michelle is going to be so jealous. Now fifty balloons are tied to the roof, the cookies are packed, and dinner isn&rsquo;t until seven.</p>
     <div class="row">
       <button class="primary" id="beginBtn" type="button">Lift off!</button>
       <p class="hint">Sound on &middot; drag to look around</p>
@@ -776,7 +776,7 @@ const box=(w,h,d,mat,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d
   box(0.5,2.4,0.12,wall,-1.35,1.2,0.34); box(1.9,2.4,0.12,wall,0.65,1.2,0.34);
   box(0.8,0.9,0.12,wall,-0.7,1.95,0.34); box(3.2,0.12,2.6,wall,0,2.34,-0.9);
   const inner=new THREE.Mesh(new THREE.BoxGeometry(2.94,2.26,2.34),new THREE.MeshLambertMaterial({color:'#b8755a',emissive:'#5a2e22',side:THREE.BackSide}));
-  inner.position.set(0,1.13,-0.9); house.add(inner);
+  inner.position.set(0,1.10,-0.9); house.add(inner);
   const rug=new THREE.Mesh(new THREE.CircleGeometry(0.75,24),L('#e9a3b4')); rug.rotation.x=-Math.PI/2; rug.position.set(-0.4,0.012,-0.95); house.add(rug);
   const night=new THREE.Mesh(new THREE.SphereGeometry(0.1,10,8),new THREE.MeshBasicMaterial({color:0xfff0a8})); night.position.set(0.7,1.5,-2.02); house.add(night);
   const inLamp=new THREE.PointLight(0xffb070,0.9,4,2); inLamp.position.set(0,1.8,-1); house.add(inLamp);
@@ -882,7 +882,7 @@ const groundY=(x,z)=>homeGround?-HOVER:-HOVER-(MR-Math.sqrt(Math.max(0,MR*MR-x*x
 const onMoon=b=>b.zone==='ground'&&!state.home;
 function makeBrain(girl,o){ return Object.assign({girl,pos:new THREE.Vector2(),y:0,zone:'deck',face:0,faceT:0,queue:[],cur:null,t:0,wait:0,waitLimit:2,
   target:null,walkPhase:0,printAcc:0,foot:0,blinkIn:2+Math.random()*3,blink:0,clear:0.3*girl.scale+0.04,flagDone:false,
-  peekDrop:0.98-0.9/girl.scale, rig:{lean:0,side:0,drop:0,rootY:0,hx:0,hy:0,hz:0,lax:0,laz:-0.15,rax:0,raz:0.15,llx:0,lrx:0}},o); }
+  peekDrop:0.98-0.9/girl.scale, rig:{tilt:0,lsp:0,lean:0,side:0,drop:0,rootY:0,hx:0,hy:0,hz:0,lax:0,laz:-0.15,rax:0,raz:0.15,llx:0,lrx:0}},o); }
 const juneB=makeBrain(june,{hand:1,seed:0.3}), pipB=makeBrain(pip,{hand:-1,seed:2.1,tiptoe:0.05});
 juneB.other=pipB; pipB.other=juneB;
 const BRAINS=[juneB,pipB];
@@ -914,18 +914,11 @@ function goTo(b,p,pose,dur,face){ b.target=p; b.queue.push(...stepsTo([b.pos.x,b
 function railSpots(b){ const s=FRONT_X.map(v=>({side:0,v})); SIDE_Z.forEach(v=>{s.push({side:-1,v},{side:1,v});});
   return s.map(sp=>railStand(b,sp)).filter(r=>free(b,r.p)); }
 function groundSpot(b){ for(let k=0;k<24;k++){ const a=(Math.random()-0.5)*2.9, r=4+Math.random()*5.5, p=[Math.sin(a)*r,Math.cos(a)*r];
-  if(!isGroundPt(p)||Math.abs(p[0])<3&&Math.abs(p[1])<3) continue; if(free(b,p)) return p; } return null; }
+  if(!isGroundPt(p)||Math.abs(p[0])<3&&Math.abs(p[1])<3||Math.hypot(p[0]-6.9,p[1]-9.7)<2.6) continue; if(free(b,p)) return p; } return null; }
 function planGround(b){
   if(b.holding){ planDrop(b); return; }
-  const roll=Math.random();
-  if(roll<0.2&&planCastle(b)) return;
-  if(roll>=0.2&&roll<0.44&&planSouvenir(b)) return;
-  if(roll>=0.44&&roll<(HOP.drawn?0.56:0.64)&&planHopscotch(b)) return;
-  if(Math.random()<0.12){ const sp=railSpots(b); if(sp.length){ const s=pick(sp); goTo(b,s.p,pick(['lean','peek','wave']),6+Math.random()*4,s.face); return; } }
-  const p=groundSpot(b); if(!p){ b.queue.push({k:'pose',pose:'idle',dur:1.5}); return; }
-  const act=pick(['look','look','moonhop','moonhop','scoop','wave','spin','idle']);
-  const dur={look:6,moonhop:4.5,scoop:3.5,wave:4,spin:2.4,idle:3}[act]+Math.random()*2;
-  goTo(b,p,act,dur,act==='look'?(Math.random()-0.5)*0.6:Math.random()*6);
+  if(pickMoonAct(b)) return;
+  b.queue.push({k:'pose',pose:'idle',dur:1.5});
 }
 function plan(b){
   if(b.zone==='ground'){ planGround(b); return; }
@@ -1022,6 +1015,7 @@ function resetMoonFun(){
   bucketRocks.forEach(m=>bucket.remove(m)); bucketRocks.length=0; bucketCount=0; bucket.visible=false;
   ALL.forEach(b=>{ b.holding=null; if(b.handRock) b.handRock.visible=false; });
   if(typeof resetHops==='function') resetHops();
+  if(typeof resetMoonExtras==='function') resetMoonExtras();
 }
 ALL.forEach(b=>{ b.holding=null; b.handRock=new THREE.Mesh(new THREE.DodecahedronGeometry(0.1,0),dustM); b.handRock.position.y=-0.38; b.handRock.visible=false; b.girl.armR.add(b.handRock); });
 /* moon hopscotch: the squares are drawn extra long, because moon hops go so far */
@@ -1054,9 +1048,81 @@ function planHopscotch(b){
     {k:'hops',pts,face},{k:'pose',pose:'hop',dur:2.4,face},{k:'say',text:pick(['Low-gravity hopscotch is the best!','I didn\'t even step on a line!','Moon hopscotch champion!'])},{k:'release'});
   b.target=hopAt(HOP.ROWS.length*HOP.LEN,0); return true;
 }
+/* more moon play: pictures drawn in the dust, moon angels, and stacked rock towers */
+const DOODLE_KINDS=['heart','star','smile','rocket','flower'];
+function doodleTex(kind,angel){
+  const cv=document.createElement('canvas'); cv.width=cv.height=128; const g=cv.getContext('2d');
+  g.strokeStyle='rgba(70,66,60,0.95)'; g.fillStyle='rgba(70,66,60,0.55)'; g.lineWidth=6; g.lineCap='round'; g.lineJoin='round';
+  g.beginPath();
+  if(angel){ g.lineWidth=0; g.fillStyle='rgba(84,80,74,0.6)';
+    g.ellipse(64,30,15,15,0,0,7); g.fill(); g.beginPath();
+    g.moveTo(64,44); g.bezierCurveTo(10,40,8,70,30,80); g.bezierCurveTo(40,66,50,62,56,62); g.lineTo(44,118); g.lineTo(84,118); g.lineTo(72,62);
+    g.bezierCurveTo(78,62,88,66,98,80); g.bezierCurveTo(120,70,118,40,64,44); g.fill(); }
+  else if(kind==='heart'){ g.moveTo(64,104); g.bezierCurveTo(10,64,22,18,64,44); g.bezierCurveTo(106,18,118,64,64,104); g.stroke(); }
+  else if(kind==='star'){ for(let i=0;i<=10;i++){ const a=-Math.PI/2+i*Math.PI/5, r=i%2?20:50; i?g.lineTo(64+Math.cos(a)*r,64+Math.sin(a)*r):g.moveTo(64+Math.cos(a)*r,64+Math.sin(a)*r); } g.stroke(); }
+  else if(kind==='smile'){ g.arc(64,64,46,0,7); g.stroke(); g.beginPath(); g.arc(64,66,26,0.2,Math.PI-0.2); g.stroke(); g.beginPath(); g.arc(48,50,4,0,7); g.arc(80,50,4,0,7); g.fill(); }
+  else if(kind==='rocket'){ g.moveTo(64,10); g.quadraticCurveTo(94,40,84,92); g.lineTo(44,92); g.quadraticCurveTo(34,40,64,10); g.stroke();
+    g.beginPath(); g.arc(64,48,10,0,7); g.stroke(); g.beginPath(); g.moveTo(46,80); g.lineTo(28,104); g.lineTo(46,96); g.moveTo(82,80); g.lineTo(100,104); g.lineTo(82,96);
+    g.moveTo(56,96); g.lineTo(52,118); g.moveTo(72,96); g.lineTo(76,118); g.stroke(); }
+  else { for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; g.moveTo(64,52); g.arc(64+Math.cos(a)*22,52+Math.sin(a)*22,13,a+Math.PI,a+Math.PI+0.01); } g.stroke();
+    for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; g.beginPath(); g.ellipse(64+Math.cos(a)*22,52+Math.sin(a)*22,13,10,a,0,7); g.stroke(); }
+    g.beginPath(); g.arc(64,52,9,0,7); g.fill(); g.beginPath(); g.moveTo(64,74); g.lineTo(64,120); g.moveTo(64,100); g.quadraticCurveTo(80,90,90,96); g.stroke(); }
+  const t=new THREE.CanvasTexture(cv); return t;
+}
+function makeDecal(tex,w,h){ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshLambertMaterial({map:tex,transparent:true,opacity:0,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
+  m.rotation.order='YXZ'; m.rotation.x=-Math.PI/2; m.visible=false; moonMarks.add(m); return {m,claimed:false,x:0,z:0}; }
+const doodles=DOODLE_KINDS.map(k=>Object.assign(makeDecal(doodleTex(k),1.5,1.5),{kind:k}));
+const angelTex=doodleTex(null,true), angels=[0,1,2].map(()=>makeDecal(angelTex,1.7,1.9));
+function makeCairn(){ const g=new THREE.Group(), parts=[]; let y=0;
+  const RC=['#a9a49b','#c9c2b5','#8f8a82','#d6cfc2','#b3ada3'];
+  for(let i=0;i<5;i++){ const r=0.34-i*0.05, h=r*0.55; const m=new THREE.Mesh(new THREE.DodecahedronGeometry(r,0),new THREE.MeshLambertMaterial({color:RC[i],flatShading:true}));
+    m.scale.setScalar(0.001); m.userData.sy=0.55; m.position.set((i%2?0.04:-0.03),y+h,(i%3?0.03:-0.02)); m.rotation.set(i,i*1.7,0); g.add(m); parts.push({m,ord:i*1.25}); y+=h*1.9; }
+  g.visible=false; moonMarks.add(g); return {g,parts,claimed:false,x:0,z:0,done:false}; }
+const cairns=[makeCairn(),makeCairn(),makeCairn()];
+function growCairn(c,k){ const s=k*6.2; c.parts.forEach(p=>{ const t=clamp((s-p.ord)/0.7,0,1), e=t<=0?0.001:t>=1?1:t*(1+0.3*Math.sin(t*Math.PI)); p.m.scale.set(e,e*p.m.userData.sy,e); }); }
+const nearBoulder=(x,z,pad)=>Math.hypot(x-6.9,z-9.7)<2.0+pad;
+const clearOf=(p,pad)=>!nearBoulder(p[0],p[1],pad)&&!nearCourse(p[0],p[1],1.2)&&Math.hypot(p[0]-BUCKET_G[0],p[1]-BUCKET_G[1])>2
+  &&!castles.some(c=>(c.g.visible||c.claimed)&&Math.hypot(c.x-p[0],c.z-p[1])<2)&&!cairns.some(c=>(c.g.visible||c.claimed)&&Math.hypot(c.x-p[0],c.z-p[1])<1.6)
+  &&!doodles.concat(angels).some(d=>(d.m.visible||d.claimed)&&Math.hypot(d.x-p[0],d.z-p[1])<1.8);
+function planDoodle(b){ const d=doodles.find(d=>!d.m.visible&&!d.claimed); if(!d) return false; const p=groundSpot(b); if(!p||!clearOf(p,0.5)) return false;
+  const f=Math.random()*6.283, stand=[p[0]-Math.sin(f)*0.95,p[1]-Math.cos(f)*0.95]; if(!isGroundPt(stand)) return false;
+  d.claimed=true; d.x=p[0]; d.z=p[1];
+  b.queue.push({k:'say',text:b===lumiB?'I\'ll draw something too!':pick(['Let\'s draw in the moon dust!','I\'m going to draw a picture!'])});
+  goTo(b,stand,'draw',5.5,f); b.queue[b.queue.length-1].doodle=d;
+  b.queue.push({k:'say',text:{heart:'A heart for Mom!',star:'A star, on the Moon!',smile:'Smile, Moon!',rocket:'A rocket! Like ours, but pointier.',flower:'A moon flower!'}[d.kind]},{k:'pose',pose:'wave',dur:2.2,face:f});
+  return true; }
+function planAngel(b){ const a=angels.find(a=>!a.m.visible&&!a.claimed); if(!a) return false; const p=groundSpot(b); if(!p||!clearOf(p,0.8)) return false;
+  const f=Math.random()*6.283, bx=p[0]-Math.sin(f)*0.8, bz=p[1]-Math.cos(f)*0.8; if(!clearOf([bx,bz],0.5)) return false;
+  a.claimed=true; a.x=bx; a.z=bz; a.face=f;
+  b.queue.push({k:'say',text:b===lumiB?'Moon angels? I\'ve never made one!':'Moon angels! Like snow angels, but dustier.'});
+  goTo(b,p,'angel',6.5,f); b.queue[b.queue.length-1].angel=a; b.queue.push({k:'pose',pose:'hop',dur:2.2,face:f}); return true; }
+function planCairn(b){ const c=cairns.find(c=>!c.g.visible&&!c.claimed); if(!c) return false; const p=groundSpot(b); if(!p||!clearOf(p,0.6)) return false;
+  const f=Math.random()*6.283, stand=[p[0]-Math.sin(f)*0.85,p[1]-Math.cos(f)*0.85]; if(!isGroundPt(stand)) return false;
+  c.claimed=true; c.x=p[0]; c.z=p[1];
+  b.queue.push({k:'say',text:'Let\'s stack a rock tower!'}); goTo(b,stand,'build',7,f); b.queue[b.queue.length-1].cairn=c;
+  b.queue.push({k:'say',text:pick(['It didn\'t fall over! Moon gravity helps.','Five rocks tall!','The tallest tower on the Moon!'])},{k:'pose',pose:'hop',dur:2.2,face:f}); return true; }
+function planPlay(b){ const p=groundSpot(b); if(!p) return false;
+  const act=pick(['look','moonhop','moonhop','scoop','spin']); const dur={look:6,moonhop:4.5,scoop:3.5,spin:2.4}[act]+Math.random()*2;
+  goTo(b,p,act,dur,act==='look'?(Math.random()-0.5)*0.6:Math.random()*6); return true; }
+function planRail(b){ const sp=railSpots(b); if(!sp.length) return false; const s=pick(sp); goTo(b,s.p,pick(['lean','peek','wave']),6+Math.random()*4,s.face); return true; }
+/* pick the next thing to do: a little random, leaning toward things nobody has done yet */
+const MOON_ACTS={castle:[1,()=>planCastle],souvenir:[1.1,()=>planSouvenir],hopscotch:[0.9,()=>planHopscotch],doodle:[1,()=>planDoodle],angel:[0.9,()=>planAngel],cairn:[0.9,()=>planCairn],play:[1,()=>planPlay],rail:[0.3,()=>planRail]};
+const moonDone=new Set();
+function pickMoonAct(b){
+  const pool=Object.keys(MOON_ACTS);
+  for(let tries=0;tries<5&&pool.length;tries++){
+    const ws=pool.map(k=>MOON_ACTS[k][0]*(moonDone.has(k)?1:2.3)*(b.lastAct===k?0.2:1)*(k==='hopscotch'&&HOP.drawn?0.6:1));
+    let r=Math.random()*ws.reduce((a,c)=>a+c,0), i=0; while(i<ws.length-1&&(r-=ws[i])>0) i++;
+    const k=pool.splice(i,1)[0];
+    if(MOON_ACTS[k][1]()(b)){ b.lastAct=k; moonDone.add(k); return true; } }
+  return false;
+}
+function resetMoonExtras(){ moonDone.clear(); ALL.forEach(b=>b.lastAct=null);
+  doodles.concat(angels).forEach(d=>{ d.m.visible=false; d.claimed=false; d.m.material.opacity=0; });
+  cairns.forEach(c=>{ c.g.visible=false; c.claimed=false; c.done=false; growCairn(c,0); }); }
 const PICK_LINES=['This one\'s a keeper!','A souvenir for Grandma!','Ooh, a sparkly one!','This one looks like a potato.','Moon rock, you\'re coming home with me.'];
 const sayIdx=b=>b===juneB?0:b===pipB?1:4;
-function sayIf(b,text){ if(typeof script!=='undefined'&&script.length) return; if(state.callHome||state.home) return; say(sayIdx(b),text); }
+function sayIf(b,text){ if(!quiet()) return; if(state.callHome||state.home) return; say(sayIdx(b),text); }
 function planCastle(b){
   const c=castles.find(c=>!c.g.visible&&!c.claimed); if(!c) return false;
   const p=groundSpot(b); if(!p) return false;
@@ -1080,7 +1146,7 @@ const damp=(a,b,k,dt)=>a+(b-a)*(1-Math.exp(-k*dt));
 const R={};
 function rigTarget(b,pose,tt,walking){
   const s=b.seed, st=b.cur;
-  R.lean=0;R.side=0;R.drop=0;R.rootY=0;R.hx=0;R.hy=Math.sin(tt*0.5+s)*0.35;R.hz=0;
+  R.lean=0;R.side=0;R.drop=0;R.rootY=0;R.hx=0;R.hy=Math.sin(tt*0.5+s)*0.35;R.hz=0;R.tilt=0;R.lsp=0;
   R.lax=Math.sin(tt*1.1+s)*0.06;R.laz=-0.15;R.rax=-R.lax;R.raz=0.15;R.llx=0;R.lrx=0;
   if(walking){ const w=Math.sin(b.walkPhase);
     if(onMoon(b)){ R.llx=w*0.35;R.lrx=-w*0.35;R.laz=-0.55;R.raz=0.55;R.rootY=Math.abs(Math.sin(b.walkPhase*0.5))*0.32;R.hy=0;R.hx=-0.1; return; }
@@ -1111,16 +1177,24 @@ function rigTarget(b,pose,tt,walking){
     case 'climb': { const c=tt*5; R.lax=-2.5+Math.sin(c)*0.35;R.rax=-2.5-Math.sin(c)*0.35;R.laz=-0.2;R.raz=0.2;
       R.llx=Math.max(0,Math.sin(c))*0.7;R.lrx=Math.max(0,-Math.sin(c))*0.7;R.hx=0.15; break; }
     case 'hug': R.hx=-0.45;R.lax=-1.5;R.rax=-1.5;R.laz=-0.4;R.raz=0.4;R.rootY=Math.abs(Math.sin(tt*2.5))*0.03; break;
+    case 'angel': if(st&&b.t>0.5&&b.t<st.dur-1.0){ const w=Math.sin(tt*3.4)*0.5+0.5; R.tilt=-1.48;R.rootY=0.3;R.hy=0;R.hx=-0.1;
+        R.laz=-0.35-w*2.2;R.raz=0.35+w*2.2;R.lsp=0.06+w*0.45; } else { R.drop=0.12;R.lean=0.2; } break;
     case 'shy': R.lax=0.4;R.rax=0.4;R.laz=0.25;R.raz=-0.25;R.hx=-0.2;R.hz=Math.sin(tt*1.3+s)*0.18;R.rootY=Math.abs(Math.sin(tt*2+s))*0.03; break;
     case 'spin': R.laz=-1.4;R.raz=1.4;R.hx=-0.15;R.rootY=0.03; break;
     case 'doorpeek': { const f=smooth(0.1,0.6,Math.sin(tt*1.2+s)*0.5+0.5);
       R.side=-lerp(0.05,0.48,f);R.hz=0.38*f;R.hy=Math.sin(tt*0.7+s)*0.3;R.rax=-0.7;R.raz=0.9; break; }
   }
 }
+function avoidBoulder(b,st){ const tg=st.path[0]; if(!tg) return; const cx=6.9, cz=9.7, R=2.05;
+  const ux=tg[0]-b.pos.x, uz=tg[1]-b.pos.y, L2=ux*ux+uz*uz; if(L2<1e-4) return;
+  const t=clamp(((cx-b.pos.x)*ux+(cz-b.pos.y)*uz)/L2,0,1), qx=b.pos.x+ux*t, qz=b.pos.y+uz*t, dd=Math.hypot(qx-cx,qz-cz);
+  if(dd<R&&t>0.02&&t<0.98){ let nx=qx-cx, nz=qz-cz; if(dd<1e-3){ nx=-uz; nz=ux; } const nl=Math.hypot(nx,nz)||1;
+    st.path.unshift([cx+nx/nl*(R+0.55),cz+nz/nl*(R+0.55)]); st.detours=(st.detours||0)+1; } }
 function updateBrain(b,dt){
   if(!b.cur){ if(!b.queue.length){ if(b.hold) b.queue.push({k:'pose',pose:b.hold,dur:1}); else plan(b); } b.cur=b.queue.shift(); b.t=0; b.wait=0; b.waitLimit=1.2+Math.random()*1.8; }
   const st=b.cur; b.t+=dt; let walking=false, pose='idle';
   if(st.k==='walk'){
+    if(b.zone==='ground'&&state.landed&&(st.detours||0)<3) avoidBoulder(b,st);
     const tg=st.path[0], dx=tg[0]-b.pos.x, dz=tg[1]-b.pos.y, d=Math.hypot(dx,dz);
     if(d<0.03){ st.path.shift(); if(!st.path.length) b.cur=null; }
     else {
@@ -1165,6 +1239,11 @@ function updateBrain(b,dt){
       if(!pb.taken){ pb.taken=true; pb.m.visible=false; b.holding=pb; b.handRock.material=pb.m.material; b.handRock.visible=true; sayIf(b,b===lumiB?pick(['This is the shiniest one. I\'ve been saving it.','Here, this one\'s for your mom!','I know every rock up here.']):pick(PICK_LINES)); } }
     if(pose==='drop'&&b.holding&&!st.dropped&&b.t>0.6){ st.dropped=true; addToBucket(b.holding.m.material); b.holding=null; b.handRock.visible=false;
       sayIf(b,bucketCount===1?'Our very first moon rock!':`That makes ${bucketCount} moon rocks!`); }
+    if(pose==='draw'&&st.doodle){ const d=st.doodle; if(!d.m.visible){ d.m.position.set(d.x,groundY(d.x,d.z)+0.03,d.z); d.m.rotation.y=b.face; d.m.visible=true; }
+      d.m.material.opacity=Math.min(1,b.t/(st.dur*0.9)); }
+    if(pose==='angel'&&st.angel&&b.t>st.dur-1.1){ const a=st.angel; if(!a.m.visible){ a.m.position.set(a.x,groundY(a.x,a.z)+0.03,a.z); a.m.rotation.y=a.face; a.m.visible=true; }
+      a.m.material.opacity=Math.min(1,(b.t-(st.dur-1.1))/0.8); }
+    if(pose==='build'&&st.cairn){ const c=st.cairn; if(!c.g.visible){ c.g.position.set(c.x,groundY(c.x,c.z),c.z); c.g.visible=true; } growCairn(c,Math.min(1,b.t/st.dur)); if(b.t>=st.dur) c.done=true; }
     if(pose==='draw'&&st.row!==undefined&&!st.drew&&b.t>0.7){ st.drew=true; HOP.rowGroups[st.row].visible=true; if(st.row===HOP.ROWS.length-1) HOP.drawn=true; }
     if(pose==='flag'&&b.t>1.2&&!b.flagDone){ b.flagDone=true; const f=flags[b===juneB?0:1], fx=b.pos.x+Math.sin(b.face)*0.55, fz=b.pos.y+Math.cos(b.face)*0.55;
       f.position.set(fx,groundY(fx,fz),fz); f.rotation.set(0.06,b.face+1.2,-0.05); f.visible=true; }
@@ -1176,9 +1255,9 @@ function updateBrain(b,dt){
   for(const key in R) rg[key]=damp(rg[key],R[key],k,dt);
   if(pose==='hopscotch') rg.rootY=R.rootY;
   const g=b.girl, drop=rg.drop;
-  g.g.position.set(b.pos.x,b.y+rg.rootY,b.pos.y); g.g.rotation.y=b.face;
+  g.g.position.set(b.pos.x,b.y+rg.rootY,b.pos.y); g.g.rotation.order='YXZ'; g.g.rotation.y=b.face; g.g.rotation.x=rg.tilt;
   g.upper.position.y=0.3-drop; g.upper.rotation.set(rg.lean,0,rg.side);
-  g.legs.forEach((l,i)=>{ l.position.y=0.3-drop; l.scale.y=Math.max(0.05,(0.3-drop)/0.3); l.rotation.x=i?rg.lrx:rg.llx; });
+  g.legs.forEach((l,i)=>{ l.position.y=0.3-drop; l.scale.y=Math.max(0.05,(0.3-drop)/0.3); l.rotation.x=i?rg.lrx:rg.llx; l.rotation.z=(i?1:-1)*rg.lsp; });
   g.head.rotation.set(rg.hx,rg.hy,rg.hz);
   g.armL.rotation.set(rg.lax,0,rg.laz); g.armR.rotation.set(rg.rax,0,rg.raz);
   g.tails.forEach((t,i)=>{ t.rotation.z=(i?1:-1)*(0.1+Math.sin(time*2.2+i)*0.08)+(walking?Math.sin(b.walkPhase*2)*0.15:0); });
@@ -1216,6 +1295,7 @@ const shooters=[]; let lastShootT=-99;
 function spawnShooter(radiant){
   const dir=radiant?radiant.clone().add(new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(0.9)).normalize():new THREE.Vector3(rnd()*2-1,rnd()*2-1,rnd()*2-1).normalize();
   const start=camera.position.clone().addScaledVector(dir,4000);
+  if(!radiant){ const du=dir.dot(up); if(du<0.15) dir.addScaledVector(up,0.2-du+Math.random()*0.6).normalize(); }
   const away=radiant?dir.clone().sub(radiant):null; if(away) away.addScaledVector(dir,-dir.dot(away));
   const vel=(away&&away.lengthSq()>1e-6?away:new THREE.Vector3(rnd()-.5,rnd()-.5,rnd()-.5).cross(dir)).normalize().multiplyScalar(radiant?1100:900);
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
@@ -1366,13 +1446,14 @@ const LINES={
   clouds:[['It\'s like marshmallow soup.','Can we keep one?'],'Clouds are colder than they look.','Shhh. Everything got quiet.'],
   above:['The sky\'s turning purple.',['Is that the first star?','Make a wish, quick!'],['The clouds are a floor now.','Don\'t jump on it.'],'It\'s the prettiest color ever.'],
   space:[['We\'re in SPACE.','Officially!'],'Earth looks like a big blue marble.',['Everything we know is down there.','Even my sneakers.'],'It\'s so quiet up here.',['Do balloons work in space?','Shh, don\'t tell them.']],
-  long:[['Are we there yet?','Almost. Maybe. Kind of.'],'Nine thousand and one... nine thousand and two...',['I packed cookies for the Moon.','The chocolate chip ones?'],'Space smells like nothing.',['Let\'s name a star.','Sir Twinkles.'],'Best. Sleepover. Ever.'],
+  long:[['Are we there yet?','Almost. Maybe. Kind of.'],['I can\'t wait to tell Michelle about this!','She\'s going to scream.'],'Nine thousand and one... nine thousand and two...',['I packed cookies for the Moon.','The chocolate chip ones?'],'Space smells like nothing.',['Let\'s name a star.','Sir Twinkles.'],'Best. Sleepover. Ever.'],
   almost:[['It\'s getting so BIG!','I call landing first!'],'Hello, Moon!',['Do you think it\'s made of cheese?','Only one way to find out.'],'Hold on tight, here we go!'],
-  landed:['Look at my footprints!',['One small step for a girl...','One giant leap for sisters!'],['We made it!','We\'re moon girls now.'],['Look, Earth is rising!','Hi, Mom! Way down there!'],'Can we stay forever?',['Moon cookies, anyone?','Yes please!'],'My feet feel bouncy.','Everything is so sparkly and gray.']
+  landed:['Look at my footprints!',['Wait until we tell Michelle!','She\'s going to flip!'],['One small step for a girl...','One giant leap for sisters!'],['We made it!','We\'re moon girls now.'],['Look, Earth is rising!','Hi, Mom! Way down there!'],'Can we stay forever?',['Moon cookies, anyone?','Yes please!'],'My feet feel bouncy.','Everything is so sparkly and gray.']
 };
 const POSE_LINES={peek:['Peekaboo!','Boo!','Can you see me?','Hiding!'],inside:['Where\'s my flashlight?','Cocoa break!','Getting my blanket!','I\'ll be right back!'],
   doorpeek:['Psst!','Is it my turn?','Peeking!'],hop:['Wheee!','Boing!'],spin:['Twirl!','Look, I\'m a ballerina!'],look:['So many stars...','That one\'s winking at me.'],
   hopscotch:['Boing!','Hop... hop... hop!'],draw:['Extra long squares!','Moon squares need to be huge.'],
+  angel:['Moon angel!','Wheee, flap flap flap!'],
   build:['Building a moon castle!','Moon dust makes great castles.','It needs one more tower!'],pickup:['This one\'s a keeper!','A souvenir for Grandma!'],drop:['Into the bucket!'],
   moonhop:['Boing! Moon jumps!','I\'m so floaty!','Look how high I go!'],scoop:['A moon rock!','This one\'s sparkly.','For my collection!'],
   flag:['I claim this Moon for us!','Our very own flag!'],climb:['Careful on the ladder!','Here I come, Moon!','Don\'t look down... okay, I looked.']};
@@ -1380,52 +1461,57 @@ const SHOOT_LINES=[['Shooting star!','Make a wish!'],['Did you see that?','A sho
 const bubbles=[{el:$('bubJune'),b:juneB,head:june.head,root:june.g,t:0},{el:$('bubPip'),b:pipB,head:pip.head,root:pip.g,t:0},
   {el:$('bubMom'),head:mom.head,root:mom.g,t:0},{el:$('bubDad'),head:dad.head,root:dad.g,t:0},{el:$('bubLumi'),b:lumiB,head:lumi.head,root:lumi.g,t:0}];
 let script=[], scriptWait=0;
-function playScript(lines){ script=lines.slice(); scriptWait=0.3; pendingReply=null; }
+function playScript(lines){ script=lines.slice(); }
 Object.assign(LINES,{
   h_leave:[['Bye, Moon!','We\'ll come back soon!'],['Bye, moon castles!','Guard the Moon for us.'],'Goodbye, footprints!',['Bye, little flag!','Guard the Moon for us.'],'The Moon is getting smaller.'],
-  h_space:[['Which way is home?','Follow the blue one.'],'Earth is getting bigger!',['I\'m getting hungry.','Me too. Moon hungry.'],'I\'m going to tell my whole class.'],
-  h_long:['Look, it\'s our side of Earth.',['It\'s nighttime down there now.','The cities look like glitter!'],['Do you think Mom\'s worried?','Mom\'s ALWAYS worried.'],['That was the best day ever.','Best day in the whole universe.']],
+  h_space:[['Which way is home?','Follow the blue one.'],['Can we call Michelle when we get home?','She\'ll never believe us!'],'Earth is getting bigger!',['I\'m getting hungry.','Me too. Moon hungry.'],'I\'m going to tell my whole class.'],
+  h_long:['Look, it\'s our side of Earth.',['Michelle is going to be SO jealous.','We should bring her next time!'],['It\'s nighttime down there now.','The cities look like glitter!'],['Do you think Mom\'s worried?','Mom\'s ALWAYS worried.'],['That was the best day ever.','Best day in the whole universe.']],
   h_sky:['The stars came down to say goodnight.',['I can smell grass!','That means we\'re close.'],'The night is so dark and pretty.',['Are you sleepy?','Nope. Maybe. A little.']],
   h_clouds:[['Clouds are silvery at night.','Like moon pillows.'],'Brrr, chilly!',['I see streetlights!','Which one is ours?'],'Shh, everybody\'s asleep down there.'],
   h_low:[['I see our house!','And the porch light is on!'],['Is that Mom and Dad?','They\'re waving the lantern!'],'I hope it\'s spaghetti.']
 });
-const decks={}; let speakIn=4, pendingReply=null;
+const decks={}; let speakIn=4, curLine=null, lineGap=0;
 function phaseKey(u){
   if(state.returning){ if(u>0.86) return 'h_leave'; if(u>0.6) return 'h_space'; if(u>0.3) return 'h_long'; if(u>0.13) return 'h_sky'; if(u>0.03) return 'h_clouds'; return 'h_low'; }
   if(state.landed) return 'landed'; if(u<0.004) return 'yard'; if(u<0.03) return 'low'; if(u<0.13) return 'clouds';
   if(u<0.3) return 'above'; if(u<0.6) return 'space'; if(u<0.86) return 'long'; return 'almost'; }
 function nextLine(key,src){ const d=decks[key]||(decks[key]=[]); if(!d.length){ d.push(...src); for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];} } return d.pop(); }
-function say(i,text){ const bb=bubbles[i]; bb.el.querySelector('.txt').textContent=text; bb.t=2.6+text.length*0.065; bb.el.classList.add('show'); }
-function speak(line,i){
-  if(i===undefined) i=Math.random()<0.5?0:1;
-  if(Array.isArray(line)){ say(i,line[0]); pendingReply={i:1-i,text:line[1],wait:1.5+line[0].length*0.045}; } else say(i,line);
-}
+/* one bubble at a time: every line waits its turn and stays up long enough to read */
+const lineTime=tx=>1.6+tx.length*0.06;
+function showLine(w,tx){ bubbles.forEach((bb,i)=>{ if(i!==w){ bb.t=0; bb.el.classList.remove('show'); } });
+  const bb=bubbles[w]; bb.el.querySelector('.txt').textContent=tx; bb.t=lineTime(tx); bb.el.classList.add('show'); curLine={w,t:bb.t}; }
+function say(i,text){ script.push([i,text]); }
+function speak(line,i){ if(i===undefined) i=Math.random()<0.5?0:1;
+  if(Array.isArray(line)) script.push([i,line[0]],[1-i,line[1]]); else script.push([i,line]); }
+const lumiTripKey=u=>u>0.3?'space':u>0.05?'sky':'low';
 function chatter(){
-  if(lumiB.active&&!state.home&&Math.random()<0.45){ const k=state.landed?'lumi_moon':'lumi_trip'; playScript(nextLine(k,state.landed?LUMI_MOON:LUMI_TRIP)); return; }
+  if(lumiB.active&&!state.home&&Math.random()<0.45){
+    if(state.landed){ playScript(nextLine('lumi_moon',LUMI_MOON)); return; }
+    const k=lumiTripKey(state.u); playScript(nextLine('lumi_'+k,LUMI_TRIP[k])); return; }
   const i=Math.random()<0.5?0:1, b=bubbles[i].b, pose=b.cur&&b.cur.k==='pose'?b.cur.pose:(b.cur&&b.cur.k==='climb'?'climb':'');
   if(POSE_LINES[pose]&&Math.random()<0.5) speak(nextLine('pose-'+pose,POSE_LINES[pose]),i);
   else { const k=phaseKey(state.u); speak(nextLine(k,LINES[k]),i); }
 }
-const quiet=()=>!pendingReply&&bubbles.every(bb=>bb.t<=0);
+const quiet=()=>!curLine&&!script.length;
 const hp=new THREE.Vector3();
 function updateSpeech(dt){
   bubbles.forEach(bb=>{ if(bb.t>0){ bb.t-=dt; if(bb.t<=0) bb.el.classList.remove('show'); } });
-  if(script.length){ scriptWait-=dt; if(scriptWait<=0){ const [w,tx]=script.shift(); say(w,tx); scriptWait=1.3+tx.length*0.055; } }
-  else if(state.started&&!state.home&&!state.callHome){
-    if(pendingReply){ pendingReply.wait-=dt; if(pendingReply.wait<=0){ say(pendingReply.i,pendingReply.text); pendingReply=null; } }
-    else if(quiet()){ speakIn-=dt; if(speakIn<=0){ chatter(); speakIn=(state.landed?5:7)+Math.random()*7; } }
-  }
+  if(curLine){ curLine.t-=dt; if(curLine.t<=0){ curLine=null; lineGap=0.45; } }
+  else if(lineGap>0) lineGap-=dt;
+  else if(script.length){ const [w,tx]=script.shift(); if(bubbles[w]&&bubbles[w].root.visible) showLine(w,tx); }
+  else if(state.started&&!state.home&&!state.callHome){ speakIn-=dt; if(speakIn<=0){ chatter(); speakIn=(state.landed?5:7)+Math.random()*7; } }
   const xs=[]; let sx=0, n=0;
   bubbles.forEach((bb,i)=>{ bb.head.getWorldPosition(hp); hp.project(camera);
     const x=(hp.x*0.5+0.5)*innerWidth, y=(-hp.y*0.5+0.5)*innerHeight; xs[i]=x;
     const vis=bb.root.visible&&hp.z<1&&x>-80&&x<innerWidth+80&&y>-40&&y<innerHeight+120;
     if(vis&&bb.t>0){ sx+=x; n++; }
     bb.el.style.transform=`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`; bb.el.style.visibility=vis?'visible':'hidden'; });
-  const mid=n>1?sx/n:innerWidth/2;
-  bubbles.forEach((bb,i)=>bb.el.classList.toggle('right',xs[i]>mid));
+  bubbles.forEach((bb,i)=>bb.el.classList.toggle('right',xs[i]>innerWidth/2));
 }
-function announce(line){ hushBubbles(); speak(line); speakIn=9; }
-function hushBubbles(){ bubbles.forEach(bb=>{bb.t=0;bb.el.classList.remove('show');}); pendingReply=null; script=[]; speakIn=4; }
+/* sky events wait for whoever is talking instead of cutting them off */
+function announce(line){ const s=Math.random()<0.5?0:1; if(script.length>2) script.length=2;
+  if(Array.isArray(line)) script.push([s,line[0]],[1-s,line[1]]); else script.push([s,line]); speakIn=9; }
+function hushBubbles(){ bubbles.forEach(bb=>{bb.t=0;bb.el.classList.remove('show');}); curLine=null; lineGap=0; script=[]; speakIn=4; }
 
 /* ---------- homecoming: parents, the trip back, dinner ---------- */
 const HOME=new THREE.Vector3(-17,HOVER,-6);
@@ -1477,22 +1563,23 @@ const ARRIVE_SCRIPT=[[0,'We\'re home!'],[2,'There they are! Welcome home, girls!
 const CALL_SCRIPT=[[3,'There! I see the balloons!'],[2,'Girls! Dinner\'s almost ready!'],[0,'Mom! Dad! Hiiii!']];
 const HUG_SCRIPT=[[2,'My brave little astronauts!'],[0,'Mom, we went all the way to the Moon!'],[3,'Did you two remember your jackets? It\'s chilly up there.'],
   [1,'I did a hundred moon jumps!'],[2,'You can tell us everything over dinner.'],[3,'Spaghetti and meatballs. Your favorite.'],
+  [0,'Can Michelle come over? She LOVES spaghetti!'],[2,'I already called her mom. She\'s on her way.'],[1,'We\'re going to tell her EVERYTHING.'],
   [1,'Can we go to Mars tomorrow?'],[2,'Maybe after school. Now go wash your hands!']];
 function hugScript(){
   if(lumiB.active){ const h=[[2,'My brave little astronauts!'],[0,'Mom, we went all the way to the Moon!'],[4,'And I came all the way to Earth!'],
       [3,'Did you three remember your jackets?'],[4,'What\'s a jacket?']];
     if(bucketCount>0) h.push([1,`We brought you ${bucketCount} moon rock${bucketCount>1?'s':''}! Lumi found the shiniest ones.`],[3,'Real moon rocks? Wow!']);
     if(castles.some(c=>c.done)) h.push([0,'And we built castles on the Moon!']);
-    h.push([2,'Lumi, would you like to stay for dinner?'],[4,'Yes, please! What\'s spaghetti?'],[3,'You\'re about to find out.'],[1,'Can Lumi have a sleepover?'],[2,'Of course. Now, all three of you, go wash your hands!']);
+    h.push([2,'Lumi, would you like to stay for dinner?'],[4,'Yes, please! What\'s spaghetti?'],[3,'You\'re about to find out.'],[0,'Can Michelle come too? She LOVES spaghetti!'],[2,'I already called her mom. She\'s on her way.'],[1,'Michelle is going to LOVE Lumi!'],[1,'Can Lumi have a sleepover?'],[2,'Of course. Now, all three of you, go wash your hands!']);
     return h; }
   const h=HUG_SCRIPT.slice();
   if(bucketCount>0) h.splice(3,1,[1,`We brought you ${bucketCount} moon rock${bucketCount>1?'s':''}! They're in the bucket.`],[3,'Real moon rocks? Wow!']);
   if(castles.some(c=>c.done)) h.splice(h.length-2,0,[0,'And we built a castle on the Moon!']);
   return h; }
-const WALK_SCRIPT=[[1,'Race you inside!'],[0,'No fair, you started first!'],[3,'Nobody run with spaghetti hands.']];
+const WALK_SCRIPT=[[1,'Race you inside!'],[0,'Save the most spaghetti for Michelle!'],[3,'Nobody run with spaghetti hands.']];
 const CALL_SCRIPT_L=[[3,'There! I see the balloons!'],[2,'Girls! Dinner\'s almost ready!'],[0,'Mom! Dad! We brought a friend!'],[3,'A... friend?']];
 const ARRIVE_SCRIPT_L=[[0,'We\'re home!'],[2,'Welcome home, girls! And... who is this?'],[1,'This is Lumi! She lives on the Moon!'],[4,'Hello, Earth people!'],[3,'Well, hello, Lumi. Welcome to Earth!']];
-const WALK_SCRIPT_L=[[1,'Race you inside!'],[4,'Wait for me! Earth grass is so tickly!'],[3,'Nobody run with spaghetti hands.']];
+const WALK_SCRIPT_L=[[1,'Race you inside!'],[4,'Wait for me! Earth grass is so tickly!'],[0,'Save some spaghetti for Michelle!'],[3,'Nobody run with spaghetti hands.']];
 const toLocal=(x,z)=>[x-HOME.x,z-HOME.z];
 function callHome(){
   if(!state.landed||state.callHome) return;
@@ -1959,7 +2046,7 @@ function skipPrep(){ if(!prep) return; hushBubbles(); prep=null; countdown('Lift
 function updatePrep(dt){ if(!prep) return; prep.t+=dt; while(prep&&prep.i<PREP.length&&prep.t>=PREP[prep.i][0]) PREP[prep.i++][1](); }
 
 /* ---------- Lumi, the real moon girl ---------- */
-const BOULDER=[6.9,9.7], LUMI_HIDE=[7.8,11.1];
+const BOULDER=[6.9,9.7], LUMI_HIDE=[8.5,11.8];
 { const bm=new THREE.Mesh(new THREE.DodecahedronGeometry(1.35,1),new THREE.MeshStandardMaterial({color:'#aaa69e',roughness:1,flatShading:true}));
   bm.scale.set(1.4,1.05,1.2); bm.position.set(BOULDER[0],groundY(BOULDER[0],BOULDER[1])+0.8,BOULDER[1]); bm.rotation.set(0.3,0.8,0.1); moonMarks.add(bm);
   for(let i=pebbles.length-1;i>=0;i--){ const p=pebbles[i]; if(Math.hypot(p.x-BOULDER[0],p.z-BOULDER[1])<2.4){ moonMarks.remove(p.m); pebbles.splice(i,1); } } }
@@ -1981,14 +2068,22 @@ const LUMI_MOON=[
   [[1,'Is it lonely up here?'],[4,'Not today!']],
   [[4,'Your hopscotch squares are SO long.'],[0,'Moon rules!']],
   [[4,'I\'ve never had friends over before.'],[0,'Now you have two!']]];
-const LUMI_TRIP=[
-  [[4,'The Moon looks so small from here!'],[1,'That\'s how it looks from our house, too.']],
-  [[4,'What are those sparkly lights?'],[0,'Cities! Lots of people live there.']],
-  [[4,'Do your parents like moon girls?'],[1,'They\'re going to love you.']],
-  [[4,'Is it true water falls out of the sky on Earth?'],[0,'It\'s called rain!'],[4,'No WAY.']],
-  [[4,'Clouds! I\'ve only ever seen them from far away.'],[1,'They\'re cold, like marshmallow soup.']],
-  [[4,'Is Earth always this dark?'],[0,'Only at night. Tomorrow we\'ll show you the sunshine!']],
-  [[4,'What does spaghetti taste like?'],[1,'Like... happy noodles.']]];
+const LUMI_TRIP={
+  space:[
+    [[4,'The Moon looks so small from here!'],[1,'That\'s how it looks from our house, too.']],
+    [[4,'Do your parents like moon girls?'],[1,'They\'re going to love you.']],
+    [[4,'What does spaghetti taste like?'],[1,'Like... happy noodles.']],
+    [[1,'You have to meet our best friend, Michelle!'],[4,'Is she a moon girl too?'],[0,'No, she lives next door. She LOVES spaghetti.']]],
+  sky:[
+    [[4,'What are those sparkly lights?'],[0,'Cities! Lots of people live there.']],
+    [[4,'Is it true water falls out of the sky on Earth?'],[0,'It\'s called rain!'],[4,'No WAY.']],
+    [[4,'Clouds! I\'ve only ever seen them from far away.'],[1,'They\'re cold, like marshmallow soup.']],
+    [[4,'Is Earth always this dark?'],[0,'Only at night. Tomorrow we\'ll show you the sunshine!']]],
+  low:[
+    [[4,'Which house is yours?'],[0,'The one with the porch light on!']],
+    [[4,'It smells like... grass?'],[1,'That\'s what Earth smells like!']],
+    [[4,'Are those your mom and dad?'],[1,'Yep! Wave!']]]
+};
 function updateLumi(dt){
   if(!state.landed||state.callHome) return;
   moonT+=dt; lumiStageT+=dt;
@@ -2000,7 +2095,7 @@ function updateLumi(dt){
     hushBubbles(); playScript(SPOT_SCRIPT);
   }
   else if(lumiStage===1&&lumiStageT>4&&!script.length&&quiet()){
-    lumiStage=2; lumiStageT=0; goPose(lumiB,[5.6,8.6],'wave',faceTo([5.6,8.6],[4,6.9])); playScript(meetScript());
+    lumiStage=2; lumiStageT=0; goPose(lumiB,[4.9,8.2],'wave',faceTo([4.9,8.2],[4,6.9])); playScript(meetScript());
   }
   else if(lumiStage===2&&!script.length&&quiet()){
     lumiStage=3; lumiStageT=0; lumiHungryAt=moonT+130;
@@ -2080,7 +2175,6 @@ function frame(now){
   updateEvents(dt,u);
 
   /* camera */
-  if(state.started&&idle>3&&!reduced&&u<0.9) camTheta+=dt*(state.home?0.015:0.035);
   const aspectBoost=camera.aspect<1?Math.pow(1/Math.max(0.42,camera.aspect),0.55):1;
   landT=damp(landT,(state.landed||state.home)?1:0,0.35,dt);
   followK=damp(followK,hs&&hs.phase==='walk'?1:0,0.5,dt);
@@ -2095,7 +2189,7 @@ function frame(now){
   starLayers.forEach(s=>s.position.copy(camera.position));
 
   /* shooting stars */
-  if(u>0.22&&!reduced){ nextShooter-=dt; if(nextShooter<=0){ spawnShooter(); nextShooter=1.8+Math.random()*4; } }
+  if(u>0.22&&!reduced){ nextShooter-=dt; if(nextShooter<=0){ spawnShooter(); nextShooter=state.landed?0.6+Math.random()*1.4:1.8+Math.random()*4; } }
   for(let i=shooters.length-1;i>=0;i--){ const s=shooters[i]; s.age+=dt;
     const head=s.start.clone().addScaledVector(s.vel,s.age), tail=head.clone().addScaledVector(s.vel,-0.36);
     const a=s.line.geometry.attributes.position; a.setXYZ(0,tail.x,tail.y,tail.z); a.setXYZ(1,head.x,head.y,head.z); a.needsUpdate=true;
