@@ -1882,12 +1882,11 @@ const MARKDEFS=[
   {k:'earth',at:(o,u)=>(u>0.2&&!state.landed)?sphereAnchor(earthSphere,o):false},
   {k:'earthrise',at:o=>state.landed?sphereAnchor(earthSphere,o):false},
   {k:'moon',at:(o,u)=>(u>0.08&&!state.landed)?sphereAnchor(moonSphere,o):false},
+  {k:'rocks',at:o=>{ if(!state.landed||!bucket.visible) return false; bucket.getWorldPosition(o); o.addScaledVector(up,1.2); return 'w'; }},
   {k:'moonground',at:o=>state.landed?(house.localToWorld(o.set(-5.5,-3.3,3.5)),'w'):false},
   {k:'gravity',at:o=>{ if(!state.landed) return false; const b=ACTIVE().find(b=>onMoon(b)&&b.cur&&b.cur.k==='pose'&&b.cur.pose==='moonhop'); if(!b) return false; house.localToWorld(o.set(b.pos.x,groundY(b.pos.x,b.pos.y)+2.9,b.pos.y)); return 'w'; }},
-  {k:'footprints',at:o=>{ if(!state.landed||printIdx===0) return false; prints[(printIdx-1)%prints.length].getWorldPosition(o); o.addScaledVector(up,0.5); return 'w'; }},
-  {k:'flag',at:o=>{ const f=flags.find(f=>f.visible); if(!f||!state.landed) return false; f.getWorldPosition(o); o.addScaledVector(up,1.9); return 'w'; }},
-  {k:'rocks',at:o=>{ if(!state.landed) return false;
-    if(!bucket.visible) return false; bucket.getWorldPosition(o); o.addScaledVector(up,1.2); return 'w'; }}
+  {k:'footprints',at:o=>{ if(!state.landed||printIdx===0) return false; prints[0].getWorldPosition(o); o.addScaledVector(up,0.5); return 'w'; }},
+  {k:'flag',at:o=>{ const f=flags.find(f=>f.visible); if(!f||!state.landed) return false; f.getWorldPosition(o); o.addScaledVector(up,1.9); return 'w'; }}
 ];
 MARKDEFS.forEach(m=>{ const f=FACTS[m.k], w=document.createElement('div'); w.className='fm'; w.hidden=true;
   const b=document.createElement('button'); b.type='button'; b.className='fm-btn'; b.style.setProperty('--tint',f.tint);
