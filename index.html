@@ -95,6 +95,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 .say.pip .who{color:#8a6ce0}
 .say.mom .bub,.say.mom .bub::after{border-color:var(--mom)} .say.mom .who{color:#c9607e}
 .say.dad .bub,.say.dad .bub::after{border-color:var(--dad)} .say.dad .who{color:#4f6fb5}
+.say.lumi .bub,.say.lumi .bub::after{border-color:#a3acdf} .say.lumi .who{color:#6f78c0}
 @media (prefers-reduced-motion:reduce){.bub{transition:opacity .3s}}
 /* pause */
 .pause{position:fixed;z-index:6;top:calc(14px + env(safe-area-inset-top, 0px));right:max(16px, env(safe-area-inset-right, 0px));
@@ -248,6 +249,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 <div class="say june" id="bubJune" aria-live="polite"><div class="bub"><span class="who">June</span><span class="txt"></span></div></div>
 <div class="say pip" id="bubPip" aria-live="polite"><div class="bub"><span class="who">Pip</span><span class="txt"></span></div></div>
 <div class="say mom" id="bubMom" aria-live="polite"><div class="bub"><span class="who">Mom</span><span class="txt"></span></div></div>
+<div class="say lumi" id="bubLumi" aria-live="polite"><div class="bub"><span class="who">Lumi</span><span class="txt"></span></div></div>
 <div class="say dad" id="bubDad" aria-live="polite"><div class="bub"><span class="who">Dad</span><span class="txt"></span></div></div>
 
 <div class="caption" id="caption" aria-live="polite">
@@ -292,7 +294,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
   <div class="panel">
     <p class="eyebrow">768,800 km there and back</p>
     <h2>Home for dinner</h2>
-    <p class="lede">June and Pip floated to the Moon and back, and still made it home before the spaghetti got cold. The end.</p>
+    <p class="lede" id="finaleLede">June and Pip floated to the Moon and back, and still made it home before the spaghetti got cold. The end.</p>
     <div class="row">
       <button class="primary" id="againFinal" type="button">Fly again</button>
     </div>
@@ -854,6 +856,11 @@ function makeGirl(o){
 const june=makeGirl({dress:'#ff8a7a',hair:'#4a2e22',skin:'#f2c7a5',legs:'#fff3e8',ribbon:'#fff3a3',style:'pigtails',scale:1.3});
 const pip=makeGirl({dress:'#b79cff',hair:'#d9783c',skin:'#c99372',legs:'#ffe1ea',ribbon:'#9fd8ff',style:'bun',scale:1.08});
 house.add(june.g,pip.g);
+const lumi=makeGirl({dress:'#c9d2f0',hair:'#f6f3ff',skin:'#e6e2f5',legs:'#f3efff',ribbon:'#fff3a3',style:'bun',scale:1.16});
+{ const aura=new THREE.Sprite(new THREE.SpriteMaterial({map:spriteTex,color:0xdfe6ff,transparent:true,opacity:0.45,depthWrite:false,blending:THREE.AdditiveBlending}));
+  aura.scale.setScalar(0.95); aura.position.y=0.16; lumi.head.add(aura);
+  const clip=new THREE.Mesh(new THREE.SphereGeometry(0.045,8,6),new THREE.MeshBasicMaterial({color:0xfff3a3})); clip.position.set(0.17,0.3,0.05); lumi.head.add(clip); }
+lumi.g.visible=false; house.add(lumi.g);
 /* Mom and Dad, who wait on the lawn for the trip home */
 function makeAdult(o){ const a=makeGirl(o); a.legs.forEach(l=>{l.scale.y=1.9;l.position.y=0.57;}); a.upper.position.y=0.57;
   a.dress.scale.set(o.slim||1,1.2,o.slim||1); a.dress.position.y=0.17; return a; }
@@ -879,6 +886,8 @@ function makeBrain(girl,o){ return Object.assign({girl,pos:new THREE.Vector2(),y
 const juneB=makeBrain(june,{hand:1,seed:0.3}), pipB=makeBrain(pip,{hand:-1,seed:2.1,tiptoe:0.05});
 juneB.other=pipB; pipB.other=juneB;
 const BRAINS=[juneB,pipB];
+const lumiB=makeBrain(lumi,{hand:1,seed:4.4}); juneB.active=pipB.active=true; lumiB.active=false; lumiB.pos.set(999,999);
+const ALL=[juneB,pipB,lumiB], ACTIVE=()=>ALL.filter(b=>b.active);
 const isInside=p=>p[1]<0.45;
 const isGroundPt=p=>Math.abs(p[0])>2.55||Math.abs(p[1])>2.55;
 function railStand(b,spot){
@@ -888,7 +897,7 @@ function railStand(b,spot){
 function route(from,to){
   const f=[from.x??from[0],from.y??from[1]];
   const a=isInside(f), z=isInside(to);
-  if(a===z) return [to.slice()];
+  if(a===z){ if(!a&&f[1]>1.45&&to[1]>1.45&&Math.abs(f[0]-to[0])>0.9){ const cx=x=>Math.max(-1.3,Math.min(1.3,x)); return [[cx(f[0]),1.15],[cx(to[0]),1.15],to.slice()]; } return [to.slice()]; }
   return a ? [DOOR_IN.slice(),DOOR_OUT.slice(),to.slice()] : [DOOR_OUT.slice(),DOOR_IN.slice(),to.slice()];
 }
 /* deck <-> moon ground goes by the rope ladder */
@@ -898,8 +907,8 @@ function stepsTo(from,fromZone,to){
   if(fromZone==='deck') return [{k:'walk',path:[...route(from,LADDER_TOP),LADDER_EDGE.slice()]},{k:'climb',dir:-1,dur:4},{k:'walk',path:[LADDER_OFF.slice(),to.slice()]}];
   return [{k:'walk',path:[LADDER_OFF.slice(),LADDER_FOOT.slice()]},{k:'climb',dir:1,dur:4.4},{k:'walk',path:[LADDER_TOP.slice(),...route(LADDER_TOP,to)]}];
 }
-const free=(b,p)=>{ const o=b.other, t=o.target||[o.pos.x,o.pos.y];
-  return Math.hypot(p[0]-o.pos.x,p[1]-o.pos.y)>1.0 && Math.hypot(p[0]-t[0],p[1]-t[1])>1.0; };
+const free=(b,p)=>ALL.every(o=>{ if(o===b||!o.active) return true; const t=o.target||[o.pos.x,o.pos.y];
+  return Math.hypot(p[0]-o.pos.x,p[1]-o.pos.y)>1.0 && Math.hypot(p[0]-t[0],p[1]-t[1])>1.0; });
 const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
 function goTo(b,p,pose,dur,face){ b.target=p; b.queue.push(...stepsTo([b.pos.x,b.pos.y],b.zone,p),{k:'pose',pose,dur,face}); }
 function railSpots(b){ const s=FRONT_X.map(v=>({side:0,v})); SIDE_Z.forEach(v=>{s.push({side:-1,v},{side:1,v});});
@@ -923,7 +932,7 @@ function plan(b){
   if(state.landed && Math.random()<0.5){ const p=groundSpot(b); if(p){ goTo(b,p,pick(['look','moonhop','scoop']),5+Math.random()*2,0); return; } }
   const inside=isInside([b.pos.x,b.pos.y]), r=Math.random();
   if(inside){
-    if(r<0.32 && b.other.cur?.pose!=='doorpeek' && free(b,DOOR_PEEK)){ goTo(b,DOOR_PEEK.slice(),'doorpeek',4+Math.random()*3,0); return; }
+    if(r<0.32 && ALL.every(o=>o===b||!o.active||o.cur?.pose!=='doorpeek') && free(b,DOOR_PEEK)){ goTo(b,DOOR_PEEK.slice(),'doorpeek',4+Math.random()*3,0); return; }
     if(r<0.45){ const p=pick(INSIDE.filter(p=>free(b,p))); if(p){ goTo(b,p.slice(),'inside',2+Math.random()*3,Math.random()*6); return; } }
   }
   const q=Math.random();
@@ -938,7 +947,8 @@ function plan(b){
 }
 /* scripted moments for both girls; a girl mid-ladder finishes her climb first */
 function together(seq,xs){
-  BRAINS.forEach((b,i)=>{ const st=railStand(b,{side:0,v:xs[i]});
+  const list=ACTIVE(), xv=list.length>2?[-1.3,-0.1,1.1]:xs;
+  list.forEach((b,i)=>{ const st=railStand(b,{side:0,v:xv[i]});
     let from=[b.pos.x,b.pos.y], zone=b.zone;
     if(b.cur&&b.cur.k==='climb'){ zone=b.cur.dir<0?'ground':'deck'; from=(b.cur.dir<0?LADDER_FOOT:LADDER_EDGE).slice(); } else b.cur=null;
     b.queue.length=0; b.target=st.p; if(typeof HOP!=='undefined'&&HOP.claimed===b) HOP.claimed=null; b.hopArc=0; b.queue.push(...stepsTo(from,zone,st.p));
@@ -1010,10 +1020,10 @@ function resetMoonFun(){
   castles.forEach(c=>{ c.g.visible=false; c.claimed=false; c.done=false; growCastle(c,0); });
   pebbles.forEach(p=>{ p.taken=false; p.claimed=null; p.m.visible=true; });
   bucketRocks.forEach(m=>bucket.remove(m)); bucketRocks.length=0; bucketCount=0; bucket.visible=false;
-  BRAINS.forEach(b=>{ b.holding=null; b.handRock.visible=false; });
+  ALL.forEach(b=>{ b.holding=null; if(b.handRock) b.handRock.visible=false; });
   if(typeof resetHops==='function') resetHops();
 }
-BRAINS.forEach(b=>{ b.holding=null; b.handRock=new THREE.Mesh(new THREE.DodecahedronGeometry(0.1,0),dustM); b.handRock.position.y=-0.38; b.handRock.visible=false; b.girl.armR.add(b.handRock); });
+ALL.forEach(b=>{ b.holding=null; b.handRock=new THREE.Mesh(new THREE.DodecahedronGeometry(0.1,0),dustM); b.handRock.position.y=-0.38; b.handRock.visible=false; b.girl.armR.add(b.handRock); });
 /* moon hopscotch: the squares are drawn extra long, because moon hops go so far */
 const HOP={O:[-6.2,3.4], F:[0,1], R:[1,0], LEN:1.7, W:0.85, ROWS:[1,1,2,1,2,1,2,1], drawn:false, claimed:null, rowGroups:[]};
 const hopAt=(along,side)=>[HOP.O[0]+HOP.F[0]*along+HOP.R[0]*side, HOP.O[1]+HOP.F[1]*along+HOP.R[1]*side];
@@ -1045,7 +1055,8 @@ function planHopscotch(b){
   b.target=hopAt(HOP.ROWS.length*HOP.LEN,0); return true;
 }
 const PICK_LINES=['This one\'s a keeper!','A souvenir for Grandma!','Ooh, a sparkly one!','This one looks like a potato.','Moon rock, you\'re coming home with me.'];
-function sayIf(b,text){ if(typeof script!=='undefined'&&script.length) return; if(state.callHome||state.home) return; say(b===juneB?0:1,text); }
+const sayIdx=b=>b===juneB?0:b===pipB?1:4;
+function sayIf(b,text){ if(typeof script!=='undefined'&&script.length) return; if(state.callHome||state.home) return; say(sayIdx(b),text); }
 function planCastle(b){
   const c=castles.find(c=>!c.g.visible&&!c.claimed); if(!c) return false;
   const p=groundSpot(b); if(!p) return false;
@@ -1058,7 +1069,7 @@ function planCastle(b){
 }
 function planDrop(b){ b.target=DROP_AT.slice(); b.queue.push({k:'walk',path:[DROP_AT.slice()]},{k:'pose',pose:'drop',dur:1.6,face:Math.atan2(BUCKET_G[0]-DROP_AT[0],BUCKET_G[1]-DROP_AT[1])}); }
 function planSouvenir(b){
-  const opts=pebbles.filter(p=>!p.taken&&p.claimed!==b.other&&free(b,[p.x,p.z])); if(!opts.length) return false;
+  const opts=pebbles.filter(p=>!p.taken&&(!p.claimed||p.claimed===b||!p.claimed.active)&&free(b,[p.x,p.z])); if(!opts.length) return false;
   const pb=pick(opts), dx=pb.x-b.pos.x, dz=pb.z-b.pos.y, d=Math.hypot(dx,dz)||1;
   const stand=[pb.x-dx/d*0.5,pb.z-dz/d*0.5]; if(!isGroundPt(stand)) return false;
   pb.claimed=b; goTo(b,stand,'pickup',2.6,Math.atan2(dx,dz)); b.queue[b.queue.length-1].pebble=pb; planDrop(b); return true;
@@ -1100,6 +1111,7 @@ function rigTarget(b,pose,tt,walking){
     case 'climb': { const c=tt*5; R.lax=-2.5+Math.sin(c)*0.35;R.rax=-2.5-Math.sin(c)*0.35;R.laz=-0.2;R.raz=0.2;
       R.llx=Math.max(0,Math.sin(c))*0.7;R.lrx=Math.max(0,-Math.sin(c))*0.7;R.hx=0.15; break; }
     case 'hug': R.hx=-0.45;R.lax=-1.5;R.rax=-1.5;R.laz=-0.4;R.raz=0.4;R.rootY=Math.abs(Math.sin(tt*2.5))*0.03; break;
+    case 'shy': R.lax=0.4;R.rax=0.4;R.laz=0.25;R.raz=-0.25;R.hx=-0.2;R.hz=Math.sin(tt*1.3+s)*0.18;R.rootY=Math.abs(Math.sin(tt*2+s))*0.03; break;
     case 'spin': R.laz=-1.4;R.raz=1.4;R.hx=-0.15;R.rootY=0.03; break;
     case 'doorpeek': { const f=smooth(0.1,0.6,Math.sin(tt*1.2+s)*0.5+0.5);
       R.side=-lerp(0.05,0.48,f);R.hz=0.38*f;R.hy=Math.sin(tt*0.7+s)*0.3;R.rax=-0.7;R.raz=0.9; break; }
@@ -1112,8 +1124,10 @@ function updateBrain(b,dt){
     const tg=st.path[0], dx=tg[0]-b.pos.x, dz=tg[1]-b.pos.y, d=Math.hypot(dx,dz);
     if(d<0.03){ st.path.shift(); if(!st.path.length) b.cur=null; }
     else {
-      const ob=b.other, o=ob.pos, ox=o.x-b.pos.x, oz=o.y-b.pos.y, od=Math.hypot(ox,oz);
-      if(od<0.8 && Math.abs(ob.y-b.y)<1.5 && (ox*dx+oz*dz)/(d*od+1e-6)>0.3){
+      let ob=null;
+      for(const o2 of ALL){ if(o2===b||!o2.active) continue; const ox=o2.pos.x-b.pos.x, oz=o2.pos.y-b.pos.y, od=Math.hypot(ox,oz);
+        if(od<0.8&&Math.abs(o2.y-b.y)<1.5&&(ox*dx+oz*dz)/(d*od+1e-6)>0.3){ ob=o2; break; } }
+      if(ob&&b.wait<5){
         const busy=ob.zone==='ladder'||(ob.cur&&ob.cur.k==='climb');
         if(!busy) b.wait+=dt; if(b.wait>b.waitLimit&&!b.hold){ b.queue.length=0; b.cur=null; b.target=null; if(HOP.claimed===b) HOP.claimed=null; } }
       else { const step=Math.min(d,(onMoon(b)?0.75:0.85)*dt); b.pos.x+=dx/d*step; b.pos.y+=dz/d*step;
@@ -1132,12 +1146,12 @@ function updateBrain(b,dt){
   } else if(st.k==='climb'){
     pose='idle';
     if(!st.started){
-      const o=b.other, dest=st.dir<0?LADDER_FOOT:LADDER_EDGE, destZone=st.dir<0?'ground':'deck';
-      const destBusy=o.zone===destZone&&Math.hypot(o.pos.x-dest[0],o.pos.y-dest[1])<0.95;
+      const others=ALL.filter(o=>o!==b&&o.active), dest=st.dir<0?LADDER_FOOT:LADDER_EDGE, destZone=st.dir<0?'ground':'deck';
+      const destBusy=others.some(o=>o.zone===destZone&&Math.hypot(o.pos.x-dest[0],o.pos.y-dest[1])<0.95), onLadder=others.some(o=>o.zone==='ladder');
       st.waited=(st.waited||0)+dt;
-      if(!b.hold&&st.waited>(b===juneB?2.5:3.6)&&(destBusy||o.zone==='ladder')){ /* step aside and let her pass */
+      if(!b.hold&&st.waited>(b===juneB?2.5:3.6)&&(destBusy||onLadder)){ /* step aside and let her pass */
         b.queue.length=0; b.target=null; b.cur={k:'walk',path:[(st.dir<0?LADDER_TOP:LADDER_OFF).slice()]}; b.t=0; }
-      else if(o.zone!=='ladder'&&!destBusy){ b.t=0; st.started=true; st.y0=b.y; st.y1=st.dir<0?groundY(LADDER_FOOT[0],LADDER_FOOT[1]):0; b.zone='ladder'; } else b.t=0; }
+      else if(!onLadder&&!destBusy){ b.t=0; st.started=true; st.y0=b.y; st.y1=st.dir<0?groundY(LADDER_FOOT[0],LADDER_FOOT[1]):0; b.zone='ladder'; } else b.t=0; }
     if(st.started){ pose='climb'; const k=clamp(b.t/st.dur,0,1); b.y=lerp(st.y0,st.y1,k);
       b.pos.set(LADDER_EDGE[0],lerp(st.dir<0?LADDER_EDGE[1]:LADDER_FOOT[1],st.dir<0?LADDER_FOOT[1]:LADDER_EDGE[1],k)); b.faceT=Math.PI;
       if(k>=1){ b.zone=st.dir<0?'ground':'deck'; b.cur=null; } }
@@ -1146,9 +1160,9 @@ function updateBrain(b,dt){
     if(pose==='spin'){ b.face+=dt*4.2; b.faceT=b.face; } else if(st.face!==undefined) b.faceT=st.face;
     if(pose==='build'&&st.castle){ const c=st.castle;
       if(!c.g.visible){ c.g.position.set(c.x,groundY(c.x,c.z),c.z); c.g.rotation.y=Math.random()*6; c.g.visible=true; }
-      growCastle(c,Math.min(1,b.t/st.dur)); if(b.t>=st.dur&&!c.done){ c.done=true; sayIf(b,pick(['Ta-da! A moon castle!','The first castle on the Moon!','Moon princesses live here now.'])); } }
+      growCastle(c,Math.min(1,b.t/st.dur)); if(b.t>=st.dur&&!c.done){ c.done=true; sayIf(b,b===lumiB?pick(['I never had anyone to build castles with!','A castle! Right next to my rock!']):pick(['Ta-da! A moon castle!','The first castle on the Moon!','Moon princesses live here now.'])); } }
     if(pose==='pickup'&&st.pebble&&!st.picked&&b.t>1.1){ st.picked=true; const pb=st.pebble;
-      if(!pb.taken){ pb.taken=true; pb.m.visible=false; b.holding=pb; b.handRock.material=pb.m.material; b.handRock.visible=true; sayIf(b,pick(PICK_LINES)); } }
+      if(!pb.taken){ pb.taken=true; pb.m.visible=false; b.holding=pb; b.handRock.material=pb.m.material; b.handRock.visible=true; sayIf(b,b===lumiB?pick(['This is the shiniest one. I\'ve been saving it.','Here, this one\'s for your mom!','I know every rock up here.']):pick(PICK_LINES)); } }
     if(pose==='drop'&&b.holding&&!st.dropped&&b.t>0.6){ st.dropped=true; addToBucket(b.holding.m.material); b.holding=null; b.handRock.visible=false;
       sayIf(b,bucketCount===1?'Our very first moon rock!':`That makes ${bucketCount} moon rocks!`); }
     if(pose==='draw'&&st.row!==undefined&&!st.drew&&b.t>0.7){ st.drew=true; HOP.rowGroups[st.row].visible=true; if(st.row===HOP.ROWS.length-1) HOP.drawn=true; }
@@ -1358,7 +1372,7 @@ const POSE_LINES={peek:['Peekaboo!','Boo!','Can you see me?','Hiding!'],inside:[
   flag:['I claim this Moon for us!','Our very own flag!'],climb:['Careful on the ladder!','Here I come, Moon!','Don\'t look down... okay, I looked.']};
 const SHOOT_LINES=[['Shooting star!','Make a wish!'],['Did you see that?','A shooting star!']];
 const bubbles=[{el:$('bubJune'),b:juneB,head:june.head,root:june.g,t:0},{el:$('bubPip'),b:pipB,head:pip.head,root:pip.g,t:0},
-  {el:$('bubMom'),head:mom.head,root:mom.g,t:0},{el:$('bubDad'),head:dad.head,root:dad.g,t:0}];
+  {el:$('bubMom'),head:mom.head,root:mom.g,t:0},{el:$('bubDad'),head:dad.head,root:dad.g,t:0},{el:$('bubLumi'),b:lumiB,head:lumi.head,root:lumi.g,t:0}];
 let script=[], scriptWait=0;
 function playScript(lines){ script=lines.slice(); scriptWait=0.3; pendingReply=null; }
 Object.assign(LINES,{
@@ -1381,6 +1395,7 @@ function speak(line,i){
   if(Array.isArray(line)){ say(i,line[0]); pendingReply={i:1-i,text:line[1],wait:1.5+line[0].length*0.045}; } else say(i,line);
 }
 function chatter(){
+  if(lumiB.active&&!state.home&&Math.random()<0.45){ const k=state.landed?'lumi_moon':'lumi_trip'; playScript(nextLine(k,state.landed?LUMI_MOON:LUMI_TRIP)); return; }
   const i=Math.random()<0.5?0:1, b=bubbles[i].b, pose=b.cur&&b.cur.k==='pose'?b.cur.pose:(b.cur&&b.cur.k==='climb'?'climb':'');
   if(POSE_LINES[pose]&&Math.random()<0.5) speak(nextLine('pose-'+pose,POSE_LINES[pose]),i);
   else { const k=phaseKey(state.u); speak(nextLine(k,LINES[k]),i); }
@@ -1417,11 +1432,11 @@ const curveHome=new THREE.CatmullRomCurve3([
 ],false,'centripetal');
 curveHome.arcLengthDivisions=3000;
 const CHAPTERS_HOME=[
-  {u:0.999,t:'Homeward',b:'They wave goodbye to their footprints. Somewhere down there, dinner is almost ready.'},
+  {u:0.999,t:'Homeward',b:'They wave goodbye to their footprints. Somewhere down there, dinner is almost ready.',bL:'Lumi waves goodbye to her boulder. Somewhere down there, dinner is almost ready.'},
   {u:0.6,t:'Follow the blue one',b:'Home is easy to find. It\'s the bright blue one.'},
-  {u:0.3,t:'Back into the sky',b:'It\'s nighttime now. The sky is dark and full of stars.'},
+  {u:0.3,t:'Back into the sky',b:'It\'s nighttime now. The sky is dark and full of stars.',bL:'It\'s nighttime now. Lumi has never seen the sky from underneath before.'},
   {u:0.1,t:'Silver clouds',b:'A sleeping town, a lot of streetlights, and one porch light still on.'},
-  {u:0.012,t:'Almost home',b:'Two people on the lawn are waving a lantern.'}
+  {u:0.012,t:'Almost home',b:'Two people on the lawn are waving a lantern.',bL:'Two people on the lawn are waving a lantern. Lumi waves back first.'}
 ];
 let chapterHomeAt=-1, hs=null;
 function makeParentCtl(rig,spot){ return {rig,pos:new THREE.Vector2(spot[0],spot[1]),face:0,faceT:0,path:[],pose:'wait',walkPhase:0,seed:Math.random()*6,lookAt:null,goingIn:false,
@@ -1457,46 +1472,57 @@ const CALL_SCRIPT=[[3,'There! I see the balloons!'],[2,'Girls! Dinner\'s almost 
 const HUG_SCRIPT=[[2,'My brave little astronauts!'],[0,'Mom, we went all the way to the Moon!'],[3,'Did you two remember your jackets? It\'s chilly up there.'],
   [1,'I did a hundred moon jumps!'],[2,'You can tell us everything over dinner.'],[3,'Spaghetti and meatballs. Your favorite.'],
   [1,'Can we go to Mars tomorrow?'],[2,'Maybe after school. Now go wash your hands!']];
-function hugScript(){ const h=HUG_SCRIPT.slice();
+function hugScript(){
+  if(lumiB.active){ const h=[[2,'My brave little astronauts!'],[0,'Mom, we went all the way to the Moon!'],[4,'And I came all the way to Earth!'],
+      [3,'Did you three remember your jackets?'],[4,'What\'s a jacket?']];
+    if(bucketCount>0) h.push([1,`We brought you ${bucketCount} moon rock${bucketCount>1?'s':''}! Lumi found the shiniest ones.`],[3,'Real moon rocks? Wow!']);
+    if(castles.some(c=>c.done)) h.push([0,'And we built castles on the Moon!']);
+    h.push([2,'Lumi, would you like to stay for dinner?'],[4,'Yes, please! What\'s spaghetti?'],[3,'You\'re about to find out.'],[1,'Can Lumi have a sleepover?'],[2,'Of course. Now, all three of you, go wash your hands!']);
+    return h; }
+  const h=HUG_SCRIPT.slice();
   if(bucketCount>0) h.splice(3,1,[1,`We brought you ${bucketCount} moon rock${bucketCount>1?'s':''}! They're in the bucket.`],[3,'Real moon rocks? Wow!']);
   if(castles.some(c=>c.done)) h.splice(h.length-2,0,[0,'And we built a castle on the Moon!']);
   return h; }
 const WALK_SCRIPT=[[1,'Race you inside!'],[0,'No fair, you started first!'],[3,'Nobody run with spaghetti hands.']];
+const CALL_SCRIPT_L=[[3,'There! I see the balloons!'],[2,'Girls! Dinner\'s almost ready!'],[0,'Mom! Dad! We brought a friend!'],[3,'A... friend?']];
+const ARRIVE_SCRIPT_L=[[0,'We\'re home!'],[2,'Welcome home, girls! And... who is this?'],[1,'This is Lumi! She lives on the Moon!'],[4,'Hello, Earth people!'],[3,'Well, hello, Lumi. Welcome to Earth!']];
+const WALK_SCRIPT_L=[[1,'Race you inside!'],[4,'Wait for me! Earth grass is so tickly!'],[3,'Nobody run with spaghetti hands.']];
 const toLocal=(x,z)=>[x-HOME.x,z-HOME.z];
 function callHome(){
   if(!state.landed||state.callHome) return;
   state.callHome=true; hideEnding(); $('homeSmall').hidden=true; $('againSmall').hidden=true;
-  hushBubbles(); speak(['Time to go home for dinner!','Bye, Moon! Bye, flag!'],0);
-  BRAINS.forEach(b=>b.hold='wave');
+  hushBubbles(); if(lumiB.active) playScript([[0,'Everybody climb aboard!'],[4,'Bye, Moon! I\'ll come back and visit!']]); else speak(['Time to go home for dinner!','Bye, Moon! Bye, flag!'],0);
+  ACTIVE().forEach(b=>b.hold='wave');
   together([{pose:'wave',dur:1e9}],[-0.65,0.55]);
 }
 function launchHome(){
   state.callHome=false; state.landed=false; state.returning=true; state.pr=0; chapterHomeAt=-1; state.parentsCalled=false;
-  BRAINS.forEach(b=>{ if(b.holding){ addToBucket(b.holding.m.material); b.holding=null; b.handRock.visible=false; } });
+  ACTIVE().forEach(b=>{ if(b.holding){ addToBucket(b.holding.m.material); b.holding=null; b.handRock.visible=false; } });
   placeBucket(true);
-  BRAINS.forEach(b=>{ b.hold=null; b.cur=null; b.queue.length=0; b.queue.push({k:'pose',pose:'wave',dur:5,face:0}); });
+  ACTIVE().forEach(b=>{ b.hold=null; b.cur=null; b.queue.length=0; b.queue.push({k:'pose',pose:'wave',dur:5,face:0}); });
   PARENTS.forEach(p=>p.rig.g.visible=true);
   ['alt','rail'].forEach(id=>$(id).classList.remove('hud-off'));
 }
 function arriveHome(){
   state.home=true; homeGround=true; state.returning=false; hs={phase:'arrive',t:0};
   capEl.classList.remove('show'); ['alt','rail'].forEach(id=>$(id).classList.add('hud-off'));
-  BRAINS.forEach(b=>b.hold='wave');
+  ACTIVE().forEach(b=>b.hold='wave');
   together([{pose:'hop',dur:2.5},{pose:'wave',dur:1e9}],[-0.65,0.55]);
   PARENTS.forEach(p=>{ p.pose='cheer'; p.lookAt=[HOME.x,HOME.z+2]; });
-  playScript(ARRIVE_SCRIPT);
+  playScript(lumiB.active?ARRIVE_SCRIPT_L:ARRIVE_SCRIPT);
 }
 function resetHome(){
   state.returning=false; state.home=false; homeGround=false; state.callHome=false; state.pr=0; state.parentsCalled=false; hs=null; chapterHomeAt=-1;
-  resetParents(); BRAINS.forEach(b=>{ b.hold=null; b.girl.g.visible=true; });
+  resetParents(); BRAINS.forEach(b=>{ b.hold=null; b.girl.g.visible=true; }); resetLumi();
   nightK=0; marksPlaced=false; $('homeSmall').hidden=true;
+  $('finaleLede').textContent='June and Pip floated to the Moon and back, and still made it home before the spaghetti got cold. The end.';
   const fi=$('finale'); fi.classList.add('gone'); fi.hidden=true;
   ['alt','rail'].forEach(id=>$(id).classList.remove('hud-off'));
 }
 const walkers=new THREE.Vector3();
 function updateHome(dt,u){
-  if(state.callHome&&BRAINS.every(b=>b.zone==='deck'&&b.cur&&b.cur.k==='pose')) launchHome();
-  if(state.returning&&u<0.012&&!state.parentsCalled){ state.parentsCalled=true; playScript(CALL_SCRIPT); }
+  if(state.callHome&&ACTIVE().every(b=>b.zone==='deck'&&b.cur&&b.cur.k==='pose')) launchHome();
+  if(state.returning&&u<0.012&&!state.parentsCalled){ state.parentsCalled=true; playScript(lumiB.active?CALL_SCRIPT_L:CALL_SCRIPT); }
   PARENTS.forEach(p=>{ if(p.rig.g.visible) updateParent(p,dt); });
   if(!hs) return; hs.t+=dt;
   if(hs.phase==='arrive'&&hs.t>6.5&&!script.length){ hs.phase='down'; hs.t=0;
@@ -1507,23 +1533,27 @@ function updateHome(dt,u){
   }
   if(hs.phase==='down'){
     PARENTS.forEach((p,i)=>{ const b=BRAINS[i]; p.lookAt=[b.pos.x+HOME.x,b.pos.y+HOME.z]; if(b.cur&&b.cur.pose==='hug') p.pose='hug'; });
-    if((BRAINS.every(b=>b.cur&&b.cur.pose==='hug')&&hs.t>1)||hs.t>60){ hs.phase='hug'; hs.t=0; playScript(hugScript()); }
+    const sistersIn=BRAINS.every(b=>b.cur&&b.cur.pose==='hug');
+    if(sistersIn&&lumiB.active&&!hs.lumiSent){ hs.lumiSent=true; const spot=toLocal(-15.4,-1.6); goPose(lumiB,spot,'shy',faceTo([-15.4,-1.6],[-15.45,0.05])); }
+    if((sistersIn&&(!lumiB.active||(lumiB.cur&&lumiB.cur.pose==='shy'))&&hs.t>1)||hs.t>75){ hs.phase='hug'; hs.t=0; playScript(hugScript()); }
   }
   if(hs.phase==='hug'&&!script.length&&hs.t>3&&quiet()){ hs.phase='walk'; hs.t=0;
     PARENTS.forEach((p,i)=>{ p.pose='walk'; p.lookAt=null; p.goingIn=true; p.path=[[DOOR_HOME.x+(i?0.8:-0.8),DOOR_HOME.y+3.2],[DOOR_HOME.x,DOOR_HOME.y]]; });
+    if(lumiB.active){ const b=lumiB; b.cur=null; b.queue.length=0; b.hold='gone';
+      b.queue.push({k:'walk',path:[toLocal(DOOR_HOME.x,DOOR_HOME.y+3.4),toLocal(DOOR_HOME.x,DOOR_HOME.y)]},{k:'pose',pose:'gone',dur:1e9}); }
     BRAINS.forEach((b,i)=>{ b.cur=null; b.queue.length=0; b.hold='gone';
       b.queue.push({k:'walk',path:[toLocal(DOOR_HOME.x+(i?1.2:-1.2),DOOR_HOME.y+2.2),toLocal(DOOR_HOME.x,DOOR_HOME.y)]},{k:'pose',pose:'gone',dur:1e9}); });
-    playScript(WALK_SCRIPT);
+    playScript(lumiB.active?WALK_SCRIPT_L:WALK_SCRIPT);
   }
   if(hs.phase==='walk'){
-    BRAINS.forEach(b=>{ if(b.cur&&b.cur.pose==='gone'&&b.girl.g.visible){ b.girl.g.visible=false; b.pos.set(999,999); } });
-    if(hs.t>13&&!hs.finale){ hs.finale=true; const fi=$('finale'); fi.hidden=false; requestAnimationFrame(()=>fi.classList.remove('gone')); }
+    ACTIVE().forEach(b=>{ if(b.cur&&b.cur.pose==='gone'&&b.girl.g.visible){ b.girl.g.visible=false; b.pos.set(999,999); } });
+    if(hs.t>13&&!hs.finale){ hs.finale=true; if(lumiB.active) $('finaleLede').textContent='June and Pip floated to the Moon and back, made a brand-new friend, and still made it home before the spaghetti got cold. The end.'; const fi=$('finale'); fi.hidden=false; requestAnimationFrame(()=>fi.classList.remove('gone')); }
   }
 }
 /* where the camera should look while everyone walks to the house */
 function walkerCenter(out){ let n=0; out.set(0,0,0);
   PARENTS.forEach(p=>{ if(p.rig.g.visible){ out.x+=p.pos.x; out.z+=p.pos.y; n++; } });
-  BRAINS.forEach(b=>{ if(b.girl.g.visible){ out.x+=b.pos.x+HOME.x; out.z+=b.pos.y+HOME.z; n++; } });
+  ACTIVE().forEach(b=>{ if(b.girl.g.visible){ out.x+=b.pos.x+HOME.x; out.z+=b.pos.y+HOME.z; n++; } });
   if(!n) out.set(DOOR_HOME.x,0,DOOR_HOME.y); else out.multiplyScalar(1/n); out.y=1.2; return out; }
 
 /* ---------- sky events along the way ---------- */
@@ -1847,7 +1877,7 @@ const MARKDEFS=[
   {k:'earthrise',at:o=>state.landed?sphereAnchor(earthSphere,o):false},
   {k:'moon',at:(o,u)=>(u>0.08&&!state.landed)?sphereAnchor(moonSphere,o):false},
   {k:'moonground',at:o=>state.landed?(house.localToWorld(o.set(-5.5,-3.3,3.5)),'w'):false},
-  {k:'gravity',at:o=>{ if(!state.landed) return false; const b=BRAINS.find(b=>onMoon(b)&&b.cur&&b.cur.k==='pose'&&b.cur.pose==='moonhop'); if(!b) return false; house.localToWorld(o.set(b.pos.x,groundY(b.pos.x,b.pos.y)+2.9,b.pos.y)); return 'w'; }},
+  {k:'gravity',at:o=>{ if(!state.landed) return false; const b=ACTIVE().find(b=>onMoon(b)&&b.cur&&b.cur.k==='pose'&&b.cur.pose==='moonhop'); if(!b) return false; house.localToWorld(o.set(b.pos.x,groundY(b.pos.x,b.pos.y)+2.9,b.pos.y)); return 'w'; }},
   {k:'footprints',at:o=>{ if(!state.landed||printIdx===0) return false; prints[(printIdx-1)%prints.length].getWorldPosition(o); o.addScaledVector(up,0.5); return 'w'; }},
   {k:'flag',at:o=>{ const f=flags.find(f=>f.visible); if(!f||!state.landed) return false; f.getWorldPosition(o); o.addScaledVector(up,1.9); return 'w'; }},
   {k:'rocks',at:o=>{ if(!state.landed) return false;
@@ -1924,6 +1954,62 @@ function beginFlight(){
 function skipPrep(){ if(!prep) return; hushBubbles(); prep=null; countdown('Liftoff!'); beginFlight(); }
 function updatePrep(dt){ if(!prep) return; prep.t+=dt; while(prep&&prep.i<PREP.length&&prep.t>=PREP[prep.i][0]) PREP[prep.i++][1](); }
 
+/* ---------- Lumi, the real moon girl ---------- */
+const BOULDER=[6.9,9.7], LUMI_HIDE=[7.8,11.1];
+{ const bm=new THREE.Mesh(new THREE.DodecahedronGeometry(1.35,1),new THREE.MeshStandardMaterial({color:'#aaa69e',roughness:1,flatShading:true}));
+  bm.scale.set(1.4,1.05,1.2); bm.position.set(BOULDER[0],groundY(BOULDER[0],BOULDER[1])+0.8,BOULDER[1]); bm.rotation.set(0.3,0.8,0.1); moonMarks.add(bm);
+  for(let i=pebbles.length-1;i>=0;i--){ const p=pebbles[i]; if(Math.hypot(p.x-BOULDER[0],p.z-BOULDER[1])<2.4){ moonMarks.remove(p.m); pebbles.splice(i,1); } } }
+let moonT=0, lumiStage=0, lumiStageT=0, lumiHungryAt=0;
+const faceTo=(from,to)=>Math.atan2(to[0]-from[0],to[1]-from[1]);
+const ladderBusy=()=>ALL.some(b=>b.active&&(b.zone==='ladder'||(b.cur&&b.cur.k==='climb'&&b.cur.started)));
+function resetLumi(){ moonT=0; lumiStage=0; lumiStageT=0; lumiB.active=false; lumi.g.visible=false; lumiB.pos.set(999,999); lumiB.cur=null; lumiB.queue.length=0;
+  lumiB.hold=null; lumiB.target=null; lumiB.zone='ground'; lumiB.holding=null; if(lumiB.handRock) lumiB.handRock.visible=false; }
+const SPOT_SCRIPT=[[1,'June... that rock just giggled.'],[0,'Rocks don\'t giggle, Pip.'],[1,'Hello? We can see your hair!'],[4,'...'],[4,'Um. Hi.']];
+function meetScript(){ const saw=castles.some(c=>c.done)?'I watched you build a castle!':HOP.drawn?'I watched you hop on the extra-long squares!':'I watched you jump so high!';
+  return [[4,'I\'m Lumi. I live here. On the Moon.'],[0,'You LIVE on the Moon?'],[4,'My whole life! Nobody ever visits, so I was hiding behind my rock.'],
+    [1,'I\'m Pip! And this is my big sister, June.'],[4,saw],[0,'Do you want to play with us?'],[4,'Yes, please! I know where all the shiny rocks are.']]; }
+const HUNGRY_SCRIPT=[[1,'June... my tummy is rumbling.'],[0,'Mine too. It must be almost dinnertime.'],[4,'What\'s dinnertime?'],[1,'It\'s when Mom makes spaghetti!'],
+  [0,'Lumi, do you want to come home with us for dinner?'],[4,'To Earth? Really?!'],[1,'You can ride in our treehouse!'],[4,'Yes! Let\'s go!']];
+const LUMI_MOON=[
+  [[4,'Earth looks so pretty from here.'],[1,'That\'s where we live!']],
+  [[0,'Lumi, what do you eat on the Moon?'],[4,'Stardust pancakes. And moon cheese, but only on Sundays.']],
+  [[4,'Want to see my favorite crater?'],[1,'Yes!']],
+  [[1,'Is it lonely up here?'],[4,'Not today!']],
+  [[4,'Your hopscotch squares are SO long.'],[0,'Moon rules!']],
+  [[4,'I\'ve never had friends over before.'],[0,'Now you have two!']]];
+const LUMI_TRIP=[
+  [[4,'The Moon looks so small from here!'],[1,'That\'s how it looks from our house, too.']],
+  [[4,'What are those sparkly lights?'],[0,'Cities! Lots of people live there.']],
+  [[4,'Do your parents like moon girls?'],[1,'They\'re going to love you.']],
+  [[4,'Is it true water falls out of the sky on Earth?'],[0,'It\'s called rain!'],[4,'No WAY.']],
+  [[4,'Clouds! I\'ve only ever seen them from far away.'],[1,'They\'re cold, like marshmallow soup.']],
+  [[4,'Is Earth always this dark?'],[0,'Only at night. Tomorrow we\'ll show you the sunshine!']],
+  [[4,'What does spaghetti taste like?'],[1,'Like... happy noodles.']]];
+function updateLumi(dt){
+  if(!state.landed||state.callHome) return;
+  moonT+=dt; lumiStageT+=dt;
+  if(lumiStage===0&&moonT>50&&!ladderBusy()){
+    lumiStage=1; lumiStageT=0; lumiB.active=true; lumi.g.visible=true; lumiB.zone='ground'; lumiB.pos.set(LUMI_HIDE[0],LUMI_HIDE[1]); lumiB.y=groundY(LUMI_HIDE[0],LUMI_HIDE[1]);
+    lumiB.face=lumiB.faceT=faceTo(LUMI_HIDE,[3.5,6.5]); setPose(lumiB,'doorpeek',lumiB.face);
+    HOP.claimed=null; castles.forEach(c=>{ if(c.claimed&&!c.g.visible) c.claimed=false; });
+    goPose(juneB,[3.3,7.3],'idle',faceTo([3.3,7.3],BOULDER)); goPose(pipB,[4.8,6.4],'idle',faceTo([4.8,6.4],BOULDER));
+    hushBubbles(); playScript(SPOT_SCRIPT);
+  }
+  else if(lumiStage===1&&lumiStageT>4&&!script.length&&quiet()){
+    lumiStage=2; lumiStageT=0; goPose(lumiB,[5.6,8.6],'wave',faceTo([5.6,8.6],[4,6.9])); playScript(meetScript());
+  }
+  else if(lumiStage===2&&!script.length&&quiet()){
+    lumiStage=3; lumiStageT=0; lumiHungryAt=moonT+130;
+    ACTIVE().forEach(b=>{ b.hold=null; b.cur=null; b.queue.length=0; b.target=null; });
+  }
+  else if(lumiStage===3&&moonT>lumiHungryAt&&!ladderBusy()){
+    lumiStage=4; lumiStageT=0; HOP.claimed=null;
+    goPose(juneB,[1.0,6.4],'idle',faceTo([1.0,6.4],[1.9,7.4])); goPose(pipB,[2.7,6.9],'idle',faceTo([2.7,6.9],[1.6,7.4]));
+    goPose(lumiB,[1.8,8.1],'idle',faceTo([1.8,8.1],[1.9,6.6])); hushBubbles(); playScript(HUNGRY_SCRIPT);
+  }
+  else if(lumiStage===4&&lumiStageT>3&&!script.length&&quiet()){ lumiStage=5; callHome(); }
+}
+
 /* ---------- loop ---------- */
 const up=new THREE.Vector3(), off=new THREE.Vector3(), target=new THREE.Vector3(), qFrame=new THREE.Quaternion(), qSway=new THREE.Quaternion(), eul=new THREE.Euler();
 const railDot=$('railDot'), altValue=$('altValue');
@@ -1955,8 +2041,9 @@ function frame(now){
   strGeo.attributes.position.needsUpdate=true;
 
   /* the sisters, and the door they keep using */
-  BRAINS.forEach(b=>updateBrain(b,dt));
-  const nearDoor=BRAINS.some(b=>Math.hypot(b.pos.x+0.7,b.pos.y-0.4)<1.05);
+  ALL.forEach(b=>{ if(b.active) updateBrain(b,dt); });
+  updateLumi(dt);
+  const nearDoor=ACTIVE().some(b=>Math.hypot(b.pos.x+0.7,b.pos.y-0.4)<1.05);
   doorOpen=damp(doorOpen,nearDoor?1:0,nearDoor?5:2.5,dt);
   doorPivot.rotation.y=2.9*doorOpen;
   updatePrep(dt);
@@ -2016,7 +2103,7 @@ function frame(now){
   const txt=fmtAlt(kmAt(u)); if(txt!==lastAltText){ altValue.textContent=txt; lastAltText=txt; }
   railDot.style.bottom=(u*100).toFixed(2)+'%';
   if(state.returning){ let idx=-1; CHAPTERS_HOME.forEach((c,i)=>{ if(u<=c.u) idx=i; });
-    if(idx>chapterHomeAt){ chapterHomeAt=idx; showCaption(CHAPTERS_HOME[idx]); speakIn=Math.min(speakIn,2.5);
+    if(idx>chapterHomeAt){ chapterHomeAt=idx; showCaption(lumiB.active&&CHAPTERS_HOME[idx].bL?Object.assign({},CHAPTERS_HOME[idx],{b:CHAPTERS_HOME[idx].bL}):CHAPTERS_HOME[idx]); speakIn=Math.min(speakIn,2.5);
       if(idx===2) together([{pose:'lean',dur:12},{pose:'peek',dur:4}],[-0.65,0.55]); } }
   if(state.started&&!state.landed&&!state.returning&&!state.home){ let idx=-1; CHAPTERS.forEach((c,i)=>{ if(u>=c.u) idx=i; }); if(idx>chapterAt){ chapterAt=idx; showCaption(CHAPTERS[idx]);
       speakIn=Math.min(speakIn,2.5);

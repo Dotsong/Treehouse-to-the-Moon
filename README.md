@@ -17,8 +17,8 @@ The whole game is a single file, `index.html`. Open it in a browser to play. It 
 1. **The backyard at sunset.** Fireflies, the old oak, Mom and Dad's house across the lawn.
 2. **Up through the sky.** Birds fly past and circle the treehouse, a cloud bank swallows it for a few seconds, and two jet planes cross with contrails.
 3. **Into space.** The atmosphere layers tick by (troposphere to exosphere), shooting stars streak past, there's a meteor shower, and two friendly UFOs come to wave.
-4. **On the Moon.** The treehouse hovers so the rope ladder touches the ground. The girls climb down, plant a flag, leave footprints, build moon castles, collect souvenir rocks in a bucket, and play extra-long low-gravity hopscotch. Stay as long as you like.
-5. **Home for dinner.** The trip back happens at night. The town and city lights come on, Mom and Dad wait on the lawn with a lantern, everyone hugs, and they all walk inside for spaghetti.
+4. **On the Moon.** The treehouse hovers so the rope ladder touches the ground. The girls climb down, plant a flag, leave footprints, build moon castles, collect souvenir rocks in a bucket, and play extra-long low-gravity hopscotch. After a while, Lumi, a real moon girl, peeks out from behind a boulder and joins their games. When the sisters get hungry, they invite her home for dinner.
+5. **Home for dinner.** The trip back happens at night. The town and city lights come on, Mom and Dad wait on the lawn with a lantern, welcome Lumi to Earth, and everyone walks inside for spaghetti.
 
 ## Under the hood
 
