@@ -1,0 +1,11 @@
+{
+  "appId": "com.dotsong.treehousetothemoon",
+  "appName": "Treehouse to the Moon",
+  "webDir": "www",
+  "backgroundColor": "#0e0d2a",
+  "ios": {
+    "contentInset": "never",
+    "scrollEnabled": false,
+    "allowsLinkPreview": false
+  }
+}

@@ -534,7 +534,7 @@ const L=(c,o={})=>new THREE.MeshLambertMaterial(Object.assign({color:c},o));
 const yard=new THREE.Group(); scene.add(yard);
 { const bark=L('#6b4a35');
   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.75,1.35,10.3,12),bark); trunk.position.y=5.15; yard.add(trunk);
-  const greens=[L('#4f8a4b',{flatShading:true}),L('#62a35a',{flatShading:true}),L('#3f7a45',{flatShading:true})];
+  const greens=[L('#4f8a4b'),L('#62a35a'),L('#3f7a45')];
   const clumps=[[0,7,0,3],[3.4,8.6,-1.4,2.6],[-3.5,8.4,-1.2,2.8],[2.6,6.8,2.6,2.4],[-2.5,7,2.6,2.3],[0,12.6,-6,3.2],[5.2,11,-3.2,2.4],[-5.2,11.3,-3,2.6],[0,6.4,-3.2,2.8]];
   clumps.forEach((c,i)=>{ const m=new THREE.Mesh(new THREE.IcosahedronGeometry(c[3],1),greens[i%3]); m.position.set(c[0],c[1],c[2]); m.rotation.set(i,i*2,0); yard.add(m);
     const len=Math.hypot(c[0],c[2]); if(len>1){ const b=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.3,len,6),bark);
@@ -581,7 +581,7 @@ const yard=new THREE.Group(); scene.add(yard);
   fb(4.4,0.28,0.75,L('#6b4a35'),1.95,0.14,3.55);
   const FLW=['#ff9eb5','#fff3a3','#c6a8ff','#ffb38a','#ffffff'];
   for(let i=0;i<16;i++){ const f=new THREE.Mesh(new THREE.SphereGeometry(0.13,6,5),L(FLW[i%5])); f.position.set(0.0+i*0.26,0.42+rnd()*0.12,3.4+rnd()*0.3); fh.add(f); }
-  for(const x of [-3.6,3.8]){ const sh=new THREE.Mesh(new THREE.IcosahedronGeometry(0.85,1),L('#4f8a4b',{flatShading:true})); sh.position.set(x,0.6,3.6); sh.scale.y=0.8; fh.add(sh); }
+  for(const x of [-3.6,3.8]){ const sh=new THREE.Mesh(new THREE.IcosahedronGeometry(0.85,1),L('#4f8a4b')); sh.position.set(x,0.6,3.6); sh.scale.y=0.8; fh.add(sh); }
   /* stepping stones toward the lawn, and a mailbox */
   for(let i=0;i<7;i++){ const st=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.46,0.08,10),stoneM); st.position.set(-1.6+Math.sin(i*0.7)*0.35,0.04,5.3+i*1.15); fh.add(st); }
   const mpost=fb(0.12,1.1,0.12,L('#8a5a3c'),0.6,0.55,12.9); const mbox=fb(0.45,0.38,0.7,L('#6f8fd0'),0.6,1.25,12.9);
@@ -707,17 +707,17 @@ function buildInstances(geo,mat,list){ const m=new THREE.InstancedMesh(geo,mat,l
   forests.forEach(f=>{ const n=Math.floor(f.r*1.25), pineBias=Math.hypot(f.x,f.z)>900?0.75:0.4;
     for(let j=0;j<n;j++){ const a=rnd()*6.283, rr=Math.sqrt(rnd())*f.r*0.95; add(f.x+Math.cos(a)*rr,f.z+Math.sin(a)*rr,rnd()<pineBias); } });
   for(let j=0;j<1100;j++){ const a=rnd()*6.283, r=60+Math.pow(rnd(),0.8)*1500; add(Math.cos(a)*r,Math.sin(a)*r,rnd()<0.35); }
-  const tmat=new THREE.MeshLambertMaterial({color:0xffffff,flatShading:true});
+  const tmat=new THREE.MeshLambertMaterial({color:0xffffff});
   buildInstances(new THREE.ConeGeometry(1,1,6).translate(0,0.5,0),tmat,pines);
   buildInstances(new THREE.IcosahedronGeometry(1,0).translate(0,0.95,0),tmat,leafy); }
 
 /* hills and a ring of mountains, so the horizon is never empty */
-{ const hmat=new THREE.MeshLambertMaterial({color:0xffffff,flatShading:true}), hills=[];
+{ const hmat=new THREE.MeshLambertMaterial({color:0xffffff}), hills=[];
   for(let i=0;i<34;i++){ const a=rnd()*6.283, r=360+rnd()*820, x=Math.cos(a)*r, z=Math.sin(a)*r; if(nearTown(x,z,70)||nearCity(x,z,110)) continue;
     const rad=55+rnd()*110; hills.push({x,y:surfY(x,z)-rad*0.12,z,sx:rad,sy:18+rnd()*46,sz:rad*(0.7+rnd()*0.5),ry:rnd()*6,c:['#5f9a4f','#6aa257','#7aa85e','#58904b'][i%4]}); }
   buildInstances(new THREE.IcosahedronGeometry(1,2),hmat,hills);
   const hash=(x,y,z)=>{ const v=Math.sin(x*127.1+y*311.7+z*74.7)*43758.5453; return v-Math.floor(v); };
-  const mmat=new THREE.MeshLambertMaterial({vertexColors:true,flatShading:true});
+  const mmat=new THREE.MeshLambertMaterial({vertexColors:true});
   const SNOW=new THREE.Color('#f4f6fb'), STONE=new THREE.Color('#8b8a9e'), SLOPE=new THREE.Color('#6d7a58');
   const peak=(x,z,h,w,seed)=>{ const geo=new THREE.ConeGeometry(1,1,9,6).translate(0,0.5,0), p=geo.attributes.position, cols=[];
     for(let v=0;v<p.count;v++){ let px=p.getX(v), py=p.getY(v), pz=p.getZ(v);
@@ -1030,7 +1030,7 @@ function makeFlag(col){
 const flags=[makeFlag('#ff8a7a'),makeFlag('#b79cff')];
 function clearMoonMarks(){ prints.forEach(m=>m.visible=false); flags.forEach(f=>f.visible=false); resetMoonFun(); }
 /* moon castles, souvenir pebbles, and a bucket that rides home on the porch */
-const dustM=new THREE.MeshLambertMaterial({color:'#cdc8bf',flatShading:true});
+const dustM=new THREE.MeshLambertMaterial({color:'#cdc8bf'});
 function makeCastle(){
   const g=new THREE.Group(), parts=[];
   const add=(geo,x,y,z,ord,mat=dustM)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.scale.setScalar(0.001); g.add(m); parts.push({m,ord}); return m; };
@@ -1051,7 +1051,7 @@ function growCastle(c,k){ const s=k*6.6;
 const pebbles=[];
 { const PC=[['#a9a49b'],['#d6cfc2'],['#8f8a99'],['#c9b9a6'],['#bcd3ff','#24345e'],['#e8d9ff','#35284e'],['#9c988f'],['#f0e6cf','#3a3020']];
   for(let i=0;i<18;i++){ let x,z; do{ const a=(rnd()-0.5)*3.0, r=3.8+rnd()*5.6; x=Math.sin(a)*r; z=Math.cos(a)*r; } while(Math.abs(x)<3.5&&Math.abs(z)<3.5);
-    const c=PC[i%PC.length], mat=new THREE.MeshLambertMaterial({color:c[0],emissive:c[1]||'#000000',flatShading:true});
+    const c=PC[i%PC.length], mat=new THREE.MeshLambertMaterial({color:c[0],emissive:c[1]||'#000000'});
     const m=new THREE.Mesh(new THREE.DodecahedronGeometry(0.1+rnd()*0.05,0),mat); m.position.set(x,groundY(x,z)+0.05,z); m.rotation.set(rnd()*3,rnd()*3,0);
     moonMarks.add(m); pebbles.push({m,x,z,taken:false,claimed:null}); } }
 const BUCKET_G=[3.15,2.8], DROP_AT=[2.6,3.2];
@@ -1131,7 +1131,7 @@ const doodles=DOODLE_KINDS.map(k=>Object.assign(makeDecal(doodleTex(k),1.5,1.5),
 const angelTex=doodleTex(null,true), angels=[0,1,2].map(()=>makeDecal(angelTex,1.7,1.9));
 function makeCairn(){ const g=new THREE.Group(), parts=[]; let y=0;
   const RC=['#a9a49b','#c9c2b5','#8f8a82','#d6cfc2','#b3ada3'];
-  for(let i=0;i<5;i++){ const r=0.34-i*0.05, h=r*0.55; const m=new THREE.Mesh(new THREE.DodecahedronGeometry(r,0),new THREE.MeshLambertMaterial({color:RC[i],flatShading:true}));
+  for(let i=0;i<5;i++){ const r=0.34-i*0.05, h=r*0.55; const m=new THREE.Mesh(new THREE.DodecahedronGeometry(r,0),new THREE.MeshLambertMaterial({color:RC[i]}));
     m.scale.setScalar(0.001); m.userData.sy=0.55; m.position.set((i%2?0.04:-0.03),y+h,(i%3?0.03:-0.02)); m.rotation.set(i,i*1.7,0); g.add(m); parts.push({m,ord:i*1.25}); y+=h*1.9; }
   g.visible=false; moonMarks.add(g); return {g,parts,claimed:false,x:0,z:0,done:false}; }
 const cairns=[makeCairn(),makeCairn(),makeCairn()];

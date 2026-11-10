@@ -27,3 +27,8 @@ The whole game is a single file, `index.html`. Open it in a browser to play. It 
 - **Characters:** June and Pip each have a small behavior planner. They walk, lean on the railing, peek over it, go inside, climb the ladder, hop, and take turns so they don't bump into each other.
 - **Landscape:** farm fields, forests, a river and lakes are drawn onto a curved patch of the planet. A town, a city and a ring of mountains fill the horizon.
 - **Saving:** the fact book remembers the facts you've found in your browser's local storage.
+
+## The iPhone and iPad app
+
+The `app/` folder packages the game as an iOS app with Capacitor. It includes three.js and the fonts so the app works offline. See [`app/IOS_CHECKLIST.md`](app/IOS_CHECKLIST.md) for the steps on a Mac, [`app/APP_STORE_LISTING.md`](app/APP_STORE_LISTING.md) for the store text, and [`privacy.html`](privacy.html) for the privacy policy. Rebuild the app's copy of the game with `python3 tools/build-app.py` after changing `index.html`.
+
