@@ -180,7 +180,20 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 .wow span{display:block;font:400 1.2rem/1 var(--hand);color:var(--book-ink);margin-bottom:4px}
 .wow p{margin:0;font:600 .95rem/1.5 var(--ui)}
 .book-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:16px}
-.book-nav span{font:400 1.05rem/1.1 var(--hand);color:var(--book-soft);text-align:center;font-variant-numeric:tabular-nums}
+.book-nav .toc-btn{width:auto;height:auto;padding:.5rem .9rem;font:400 1.1rem/1.1 var(--hand);color:var(--book-soft);font-variant-numeric:tabular-nums;border-radius:999px}
+.book-nav .toc-btn:disabled{opacity:1;background:transparent;border-color:transparent;cursor:default}
+/* contents page */
+.toc{display:flex;flex-direction:column;gap:10px;max-height:min(56vh,440px);overflow:auto;padding-right:4px;margin-top:2px}
+.toc-group h4{margin:0 0 6px;font:400 1.1rem/1 var(--hand);color:var(--book-soft)}
+.toc-list{display:flex;flex-wrap:wrap;gap:6px}
+.book .toc-item{display:inline-flex;align-items:center;gap:5px;padding:.38rem .72rem;border-radius:999px;font:700 .8rem/1 var(--ui);color:var(--book-ink);background:var(--paper-deep);border:2px solid var(--tint)}
+.book .toc-item.locked{color:var(--book-soft);background:transparent;border-style:dashed;border-color:rgba(58,37,64,.28)}
+.book .toc-item:hover{background:#fff;border-color:var(--tint)}
+.toc-star{color:#e8a920;font-size:.9rem}
+/* pages not found yet */
+.redact{display:block;height:.78em;margin:.5em 0;border-radius:6px;background:repeating-linear-gradient(90deg, rgba(58,37,64,.16) 0 18px, rgba(58,37,64,.1) 18px 26px)}
+.art.locked svg{filter:grayscale(1) brightness(.85) blur(1.2px);opacity:.55}
+.wow.locked{background:rgba(58,37,64,.05);border-color:rgba(58,37,64,.25)}
 .book button{color:var(--book-ink);background:var(--paper-deep);border:2px solid rgba(58,37,64,.18);-webkit-backdrop-filter:none;backdrop-filter:none}
 .book button:hover{background:#fff;border-color:var(--cover)}
 .book button:disabled{opacity:.35;cursor:default}
@@ -192,6 +205,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
   .page.left{border-radius:9px 9px 3px 3px;padding:16px;flex-direction:row;gap:14px;
     background-image:linear-gradient(to top, rgba(80,50,60,.16), rgba(80,50,60,0) 22%)}
   .art{width:auto}.art svg{width:96px}
+  .toc{max-height:none}
   .page.right{max-height:calc(100vh - 230px);overflow:auto;border-radius:3px 3px 9px 9px;padding:18px 18px 14px;background-image:linear-gradient(to bottom, rgba(80,50,60,.14), rgba(80,50,60,0) 10%), repeating-linear-gradient(to bottom, transparent 0 27px, var(--paper-line) 27px 28px)}
   .book .book-close{right:6px;top:6px;width:40px;height:40px}
   .paused-banner{font-size:1rem;top:auto;bottom:calc(150px + env(safe-area-inset-bottom, 0px))}
@@ -332,10 +346,11 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
       <p class="kicker" id="bookKicker"></p>
       <h3 id="bookTitle"></h3>
       <p class="body" id="bookBody"></p>
-      <div class="wow"><span>Did you know?</span><p id="bookExtra"></p></div>
+      <div class="wow" id="bookWow"><span id="bookWowLabel">Did you know?</span><p id="bookExtra"></p></div>
+      <div class="toc" id="bookToc" hidden></div>
       <div class="book-nav">
         <button id="bookPrev" type="button" aria-label="Previous page">‹</button>
-        <span id="bookPage"></span>
+        <button class="toc-btn" id="bookPage" type="button"></button>
         <button id="bookNext" type="button" aria-label="Next page">›</button>
       </div>
     </div>
@@ -1945,24 +1960,51 @@ function setPaused(p){
   $('pausedBanner').classList.toggle('show',p&&!bookOpen); document.body.classList.toggle('is-paused',p);
 }
 const foundSorted=()=>FACT_ORDER.filter(k=>found.includes(k));
+let bookMode='page';
+const CHAPTERS_ORDER=[YARD,SKYK,AIR,SPACE,MOONK,VIS];
+function artSvg(f){ return `<svg viewBox="0 0 120 120" role="img" aria-label="${f.title}"><defs><clipPath id="artClip"><circle cx="60" cy="60" r="46"/></clipPath></defs><g clip-path="url(#artClip)">${ART[f.art]}</g><circle cx="60" cy="60" r="46" fill="none" stroke="${f.tint}" stroke-width="3"/></svg>`; }
+function blanks(text){ const n=Math.max(2,Math.ceil(text.length/40)); let h='';
+  for(let i=0;i<n;i++) h+=`<span class="redact" style="width:${i===n-1?35+((text.length*7+i*13)%40):82+((text.length+i*17)%18)}%"></span>`; return h; }
+function setPageParts(showToc){ $('bookBody').hidden=showToc; $('bookWow').hidden=showToc; $('bookToc').hidden=!showToc; }
 function renderBook(flip){
-  const f=FACTS[bookKey]; $('book').style.setProperty('--cover',f.tint);
-  $('bookArt').innerHTML=`<svg viewBox="0 0 120 120" role="img" aria-label="${f.title}"><defs><clipPath id="artClip"><circle cx="60" cy="60" r="46"/></clipPath></defs><g clip-path="url(#artClip)">${ART[f.art]}</g><circle cx="60" cy="60" r="46" fill="none" stroke="${f.tint}" stroke-width="3"/></svg>`;
-  $('bookKicker').textContent=f.kicker; $('bookTitle').textContent=f.title; $('bookBody').textContent=f.body; $('bookExtra').textContent=f.extra;
-  $('bookLabel').textContent=f.label;
-  const list=foundSorted(), i=list.indexOf(bookKey);
-  $('bookPage').textContent=`${found.length} of ${FACT_ORDER.length} facts found`;
-  $('bookPrev').disabled=i<=0; $('bookNext').disabled=i>=list.length-1;
-  if(flip){ const pg=$('bookSheet'); pg.classList.remove('flip'); void pg.offsetWidth; pg.classList.add('flip'); }
+  const pg=$('bookSheet');
+  if(bookMode==='toc'){
+    $('book').style.setProperty('--cover','#d0607a');
+    const art=$('bookArt'); art.classList.remove('locked'); art.innerHTML=artSvg({title:'My Fact Book',tint:'#d0607a',art:'stars'});
+    $('bookLabel').textContent='My Fact Book'; $('bookKicker').textContent='Contents'; $('bookTitle').textContent=`${found.length} of ${FACT_ORDER.length} facts found`;
+    setPageParts(true);
+    $('bookToc').innerHTML=CHAPTERS_ORDER.map(ch=>{ const ks=FACT_ORDER.filter(k=>FACTS[k].kicker===ch);
+      return `<div class="toc-group"><h4>${ch}</h4><div class="toc-list">${ks.map(k=>{ const f=FACTS[k], got=found.includes(k);
+        return `<button type="button" class="toc-item${got?'':' locked'}" data-k="${k}" style="--tint:${f.tint}">${got?'<span class="toc-star" aria-hidden="true">★</span>':''}${f.label}</button>`; }).join('')}</div></div>`; }).join('');
+    $('bookToc').querySelectorAll('.toc-item').forEach(b=>b.addEventListener('click',()=>{ bookMode='page'; bookKey=b.dataset.k; renderBook(true); }));
+    $('bookPage').textContent='Contents'; $('bookPage').disabled=true;
+    $('bookPrev').disabled=true; $('bookNext').disabled=false;
+  } else {
+    const f=FACTS[bookKey], got=found.includes(bookKey); $('book').style.setProperty('--cover',f.tint);
+    const art=$('bookArt'); art.classList.toggle('locked',!got); art.innerHTML=artSvg(f);
+    $('bookKicker').textContent=f.kicker; $('bookTitle').textContent=f.title; $('bookLabel').textContent=got?f.label:'Not found yet';
+    setPageParts(false);
+    if(got){ $('bookBody').textContent=f.body; $('bookWowLabel').textContent='Did you know?'; $('bookExtra').textContent=f.extra; }
+    else { $('bookBody').innerHTML=blanks(f.body); $('bookWowLabel').textContent='Not found yet'; $('bookExtra').textContent='Look for this little book tag during the trip to fill in this page!'; }
+    $('bookWow').classList.toggle('locked',!got);
+    $('bookPage').textContent=`Contents · ${found.length}/${FACT_ORDER.length}`; $('bookPage').disabled=false;
+    $('bookPrev').disabled=false; $('bookNext').disabled=FACT_ORDER.indexOf(bookKey)>=FACT_ORDER.length-1;
+  }
+  if(flip){ pg.classList.remove('flip'); void pg.offsetWidth; pg.classList.add('flip'); }
 }
+function showBook(){ if(!paused){ autoPaused=true; setPaused(true); } bookOpen=true; $('bookScrim').hidden=false; $('pausedBanner').classList.remove('show');
+  setTimeout(()=>{ try{ $('bookClose').focus({preventScroll:true}); }catch(e){} },60); }
 function openFact(k){
   if(!FACTS[k]) return;
-  if(!paused){ autoPaused=true; setPaused(true); }
-  bookOpen=true; bookKey=k; if(!found.includes(k)){ found.push(k); saveFound(); updateBookBtn(); }
-  renderBook(true); $('bookScrim').hidden=false; $('pausedBanner').classList.remove('show');
-  setTimeout(()=>{ try{ $('bookClose').focus({preventScroll:true}); }catch(e){} },60);
+  bookMode='page'; bookKey=k; if(!found.includes(k)){ found.push(k); saveFound(); updateBookBtn(); }
+  renderBook(true); showBook();
 }
-function turnPage(d){ const list=foundSorted(), i=list.indexOf(bookKey)+d; if(i<0||i>=list.length) return; bookKey=list[i]; renderBook(true); }
+function openContents(){ bookMode='toc'; renderBook(true); showBook(); }
+function turnPage(d){
+  if(bookMode==='toc'){ if(d>0){ bookMode='page'; bookKey=FACT_ORDER[0]; renderBook(true); } return; }
+  const i=FACT_ORDER.indexOf(bookKey)+d;
+  if(i<0){ bookMode='toc'; renderBook(true); return; }
+  if(i>=FACT_ORDER.length) return; bookKey=FACT_ORDER[i]; renderBook(true); }
 function closeBook(){ $('bookScrim').hidden=true; bookOpen=false;
   if(autoPaused){ autoPaused=false; setPaused(false); } else if(paused) $('pausedBanner').classList.add('show'); }
 $('pauseBtn').addEventListener('click',()=>{ if(bookOpen) closeBook(); autoPaused=false; setPaused(!paused); });
@@ -1970,7 +2012,8 @@ $('bookClose').addEventListener('click',closeBook);
 $('bookPrev').addEventListener('click',()=>turnPage(-1));
 $('bookNext').addEventListener('click',()=>turnPage(1));
 $('bookScrim').addEventListener('click',e=>{ if(e.target===$('bookScrim')) closeBook(); });
-$('bookBtn').addEventListener('click',()=>openFact(found.length?foundSorted()[found.length-1]:'treehouse'));
+$('bookBtn').addEventListener('click',()=>openContents());
+$('bookPage').addEventListener('click',()=>{ bookMode='toc'; renderBook(true); });
 $('layerChip').addEventListener('click',()=>openFact(chipKey));
 addEventListener('keydown',e=>{
   if(e.key==='Escape'&&bookOpen){ closeBook(); return; }
