@@ -2077,7 +2077,6 @@ function frame(now){
 
   /* camera */
   if(state.started&&idle>3&&!reduced&&u<0.9) camTheta+=dt*(state.home?0.015:0.035);
-  if(u>0.9&&idle>3){ let d=END_THETA-camTheta; d=Math.atan2(Math.sin(d),Math.cos(d)); camTheta+=d*Math.min(1,dt*0.35); userPhi+=(0-userPhi)*Math.min(1,dt*0.3); }
   const aspectBoost=camera.aspect<1?Math.pow(1/Math.max(0.42,camera.aspect),0.55):1;
   landT=damp(landT,(state.landed||state.home)?1:0,0.35,dt);
   followK=damp(followK,hs&&hs.phase==='walk'?1:0,0.5,dt);
