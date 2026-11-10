@@ -1193,7 +1193,7 @@ function planCastle(b){
 }
 function planDrop(b){ b.target=DROP_AT.slice(); b.queue.push({k:'walk',path:[DROP_AT.slice()]},{k:'pose',pose:'drop',dur:1.6,face:Math.atan2(BUCKET_G[0]-DROP_AT[0],BUCKET_G[1]-DROP_AT[1])}); }
 function planSouvenir(b){
-  const opts=pebbles.filter(p=>!p.taken&&(!p.claimed||p.claimed===b||!p.claimed.active)&&free(b,[p.x,p.z])); if(!opts.length) return false;
+  const opts=pebbles.filter(p=>!p.taken&&p.m.visible&&(!p.claimed||p.claimed===b||!p.claimed.active)&&free(b,[p.x,p.z])); if(!opts.length) return false;
   const pb=pick(opts), dx=pb.x-b.pos.x, dz=pb.z-b.pos.y, d=Math.hypot(dx,dz)||1;
   const stand=[pb.x-dx/d*0.5,pb.z-dz/d*0.5]; if(!isGroundPt(stand)) return false;
   pb.claimed=b; goTo(b,stand,'pickup',2.6,Math.atan2(dx,dz)); b.queue[b.queue.length-1].pebble=pb; planDrop(b); return true;
@@ -1473,6 +1473,20 @@ $('skipBtn').addEventListener('click',()=>skipPrep());
 $('soundBtn').addEventListener('click',e=>{ const on=Music.toggle(); e.currentTarget.textContent=on?'Music on':'Music off'; e.currentTarget.setAttribute('aria-pressed',String(on)); });
 const PACES=[1,2,4];
 $('paceBtn').addEventListener('click',e=>{ state.pace=PACES[(PACES.indexOf(state.pace)+1)%PACES.length]; e.currentTarget.textContent='Pace '+state.pace+'×'; });
+/* the bucket and the souvenir pebbles appear only where the storybook card hides them, so nothing pops into view at touchdown */
+let propsHidden=[], propsCardT=0; const propP=new THREE.Vector3();
+function hideMoonProps(){ propsHidden=[bucket,...pebbles.filter(p=>!p.taken).map(p=>p.m)]; propsHidden.forEach(o=>o.visible=false); propsCardT=0; }
+function revealMoonProps(dt){
+  if(!propsHidden.length) return; if(!state.landed){ propsHidden=[]; return; }
+  const en=$('ending'), up=!en.hidden&&!en.classList.contains('gone');
+  if(!up){ if(propsCardT>0){ propsHidden.forEach(o=>o.visible=true); propsHidden=[]; } return; }
+  propsCardT+=dt; if(propsCardT<1.5) return;
+  const r=en.querySelector('.story').getBoundingClientRect();
+  propsHidden=propsHidden.filter(o=>{ o.getWorldPosition(propP); propP.project(camera);
+    const x=(propP.x*0.5+0.5)*innerWidth, y=(-propP.y*0.5+0.5)*innerHeight;
+    const hidden=propP.z>1||x<-60||x>innerWidth+60||y<-60||y>innerHeight+60||(x>r.left+20&&x<r.right-20&&y>r.top+20&&y<r.bottom-20);
+    if(hidden) o.visible=true; return !hidden; });
+}
 function hideEnding(){ const en=$('ending'); en.classList.add('gone'); setTimeout(()=>en.hidden=true,1500); }
 function flyAgain(toStart){
   if(bookOpen) closeBook(); autoPaused=false; setPaused(false);
@@ -1490,7 +1504,7 @@ $('stayBtn').addEventListener('click',()=>{ hideEnding(); $('homeSmall').hidden=
 $('homeBtn').addEventListener('click',()=>callHome());
 $('homeSmall').addEventListener('click',()=>callHome());
 $('goodnightBtn').addEventListener('click',()=>flyAgain(true));
-function onLand(){ narrate('And that is how two sisters came to be standing on the Moon before dinner.'); placeBucket(false); hushBubbles(); speak(['We landed!','On the MOON!'],0); together([{pose:'hop',dur:3},{pose:'wave',dur:3.5}],[-0.65,0.55]);
+function onLand(){ narrate('And that is how two sisters came to be standing on the Moon before dinner.'); placeBucket(false); hideMoonProps(); hushBubbles(); speak(['We landed!','On the MOON!'],0); together([{pose:'hop',dur:3},{pose:'wave',dur:3.5}],[-0.65,0.55]);
   BRAINS.forEach((b,i)=>{ const spot=i?[3.6,6.4]:[-2.4,7.0]; b.queue.push(...stepsTo(b.target,'deck',spot),{k:'pose',pose:i?'moonhop':'flag',dur:5.5,face:i?0.4:-0.3}); b.target=spot; }); setTimeout(()=>{ if(!state.landed) return; const en=$('ending'); en.hidden=false; requestAnimationFrame(()=>en.classList.remove('gone')); capEl.classList.remove('show'); },3500); }
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ Music.resume(); if(state.started) keepAwake(); } });
 
@@ -1535,7 +1549,7 @@ Object.assign(LINES,{
   h_long:['Look, it\'s our side of Earth.',['It\'s nighttime down there now.','The cities look like glitter!'],['Do you think Mom\'s worried?','Mom\'s ALWAYS worried.'],['That was the best day ever.','Best day in the whole universe.']],
   h_sky:['The stars came down to say goodnight.',['I can smell grass!','That means we\'re close.'],'The night is so dark and pretty.',['Are you sleepy?','Nope. Maybe. A little.']],
   h_clouds:[['Clouds are silvery at night.','Like moon pillows.'],'Brrr, chilly!',['I see streetlights!','Which one is ours?'],'Shh, everybody\'s asleep down there.'],
-  h_low:[['I see our house!','And the porch light is on!'],['Is that Mom and Dad?','They\'re waving the lantern!'],'I hope it\'s spaghetti.']
+  h_low:[['Is that Mom and Dad?','They\'re waving the lantern!'],'I hope it\'s spaghetti.']
 });
 const decks={}; let speakIn=4, curLine=null, lineGap=0;
 function phaseKey(u){
@@ -1566,7 +1580,7 @@ function updateSpeech(dt){
   if(curLine){ curLine.t-=dt; if(curLine.t<=0){ curLine=null; lineGap=0.45; } }
   else if(lineGap>0) lineGap-=dt;
   else if(script.length){ const [w,tx]=script.shift(); if(bubbles[w]&&bubbles[w].root.visible) showLine(w,tx); }
-  else if(state.started&&!state.home&&!state.callHome){ speakIn-=dt; if(speakIn<=0){ chatter(); speakIn=(state.landed?5:7)+Math.random()*7; } }
+  else if(state.started&&!state.home&&!state.callHome&&!state.finale){ speakIn-=dt; if(speakIn<=0){ chatter(); speakIn=(state.landed?5:7)+Math.random()*7; } }
   const xs=[]; let sx=0, n=0;
   bubbles.forEach((bb,i)=>{ bb.head.getWorldPosition(hp); hp.project(camera);
     const x=(hp.x*0.5+0.5)*innerWidth, y=(-hp.y*0.5+0.5)*innerHeight; xs[i]=x;
@@ -1577,7 +1591,7 @@ function updateSpeech(dt){
   bubbles.forEach((bb,i)=>bb.el.classList.toggle('right',xs[i]<innerWidth/2));
 }
 /* sky events wait for whoever is talking instead of cutting them off */
-function announce(line){ const s=Math.random()<0.5?0:1; if(script.length>2) script.length=2;
+function announce(line){ if(state.finale) return; const s=Math.random()<0.5?0:1; if(script.length>2) script.length=2;
   if(Array.isArray(line)) script.push([s,line[0]],[1-s,line[1]]); else script.push([s,line]); speakIn=9; }
 function hushBubbles(){ bubbles.forEach(bb=>{bb.t=0;bb.el.classList.remove('show');}); curLine=null; lineGap=0; script=[]; speakIn=4; }
 
@@ -1600,7 +1614,7 @@ function updateNarrator(dt){
   if(narr.t>0){ narr.t-=dt; if(narr.t<=0){ narrEl.classList.remove('show'); narr.gap=1.7; } }
   else if(narr.gap>0) narr.gap-=dt;
   else if(narr.q.length){ const tx=narr.q.shift(); narrEl.textContent=tx; narrEl.classList.add('show'); narr.t=3.6+tx.length*0.065; narr.idle=34+Math.random()*24; }
-  else if(state.started&&!state.home&&!state.callHome&&!activeEvents.length&&!(state.landed&&lumiStage>0&&lumiStage<3)){ narr.idle-=dt;
+  else if(state.started&&!state.home&&!state.callHome&&!state.finale&&!activeEvents.length&&!(state.landed&&lumiStage>0&&lumiStage<3)){ narr.idle-=dt;
     if(narr.idle<=0){ const p=NARR_PLACE[phaseKey(state.u)]; narrate(nextLine('narr-'+p,NARR_AMBIENT[p])); } }
 }
 
@@ -1680,12 +1694,19 @@ function callHome(){
   together([{pose:'wave',dur:1e9}],[-0.65,0.55]);
 }
 function launchHome(){
-  state.callHome=false; state.landed=false; state.returning=true; state.pr=0; chapterHomeAt=-1; state.parentsCalled=false;
+  state.callHome=false; state.landed=false; state.returning=true; state.pr=0; chapterHomeAt=-1; state.parentsCalled=false; state.finale=false;
   ACTIVE().forEach(b=>{ if(b.holding){ addToBucket(b.holding.m.material); b.holding=null; b.handRock.visible=false; } });
   placeBucket(true);
   ACTIVE().forEach(b=>{ b.hold=null; b.cur=null; b.queue.length=0; b.queue.push({k:'pose',pose:'wave',dur:5,face:0}); });
   PARENTS.forEach(p=>p.rig.g.visible=true);
   ['alt','rail'].forEach(id=>$(id).classList.remove('hud-off'));
+}
+function startFinale(){
+  state.finale=true; hushBubbles(); hushNarrator();
+  ACTIVE().forEach(b=>{ if(b.holding){ addToBucket(b.holding.m.material); b.holding=null; b.handRock.visible=false; } b.hold='wave'; });
+  together([{pose:'wave',dur:1e9}],[-0.65,0.55]);
+  playScript([[0,'I see our house!'],[1,'And the porch light is on!']]);
+  narrate('And there, at the bottom of all that sky, was home.');
 }
 function arriveHome(){
   state.home=true; homeGround=true; state.returning=false; hs={phase:'arrive',t:0}; narrate('Home again, with moon dust still in their shoes.');
@@ -1693,10 +1714,10 @@ function arriveHome(){
   ACTIVE().forEach(b=>b.hold='wave');
   together([{pose:'hop',dur:2.5},{pose:'wave',dur:1e9}],[-0.65,0.55]);
   PARENTS.forEach(p=>{ p.pose='cheer'; p.lookAt=[HOME.x,HOME.z+2]; });
-  playScript(lumiB.active?ARRIVE_SCRIPT_L:ARRIVE_SCRIPT);
+  script.push(...(lumiB.active?ARRIVE_SCRIPT_L:ARRIVE_SCRIPT));
 }
 function resetHome(){
-  state.returning=false; state.home=false; homeGround=false; state.callHome=false; state.pr=0; state.parentsCalled=false; hs=null; chapterHomeAt=-1;
+  state.returning=false; state.home=false; homeGround=false; state.callHome=false; state.pr=0; state.parentsCalled=false; state.finale=false; hs=null; chapterHomeAt=-1;
   resetParents(); BRAINS.forEach(b=>{ b.hold=null; b.girl.g.visible=true; }); resetLumi();
   nightK=0; marksPlaced=false; $('homeSmall').hidden=true;
   $('finaleLede').textContent='June and Pip floated to the Moon and back, and still made it home before the spaghetti got cold. The end.';
@@ -1706,7 +1727,9 @@ function resetHome(){
 const walkers=new THREE.Vector3();
 function updateHome(dt,u){
   if(state.callHome&&ACTIVE().every(b=>b.zone==='deck'&&b.cur&&b.cur.k==='pose')) launchHome();
-  if(state.returning&&u<0.012&&!state.parentsCalled){ state.parentsCalled=true; playScript(lumiB.active?CALL_SCRIPT_L:CALL_SCRIPT); }
+  /* the final sequence: once they spot the house, everything else stops and the homecoming plays straight through to dinner */
+  if(state.returning&&u<0.03&&!state.finale) startFinale();
+  if(state.returning&&u<0.012&&!state.parentsCalled){ state.parentsCalled=true; script.push(...(lumiB.active?CALL_SCRIPT_L:CALL_SCRIPT)); }
   PARENTS.forEach(p=>{ if(p.rig.g.visible) updateParent(p,dt); });
   if(!hs) return; hs.t+=dt;
   if(hs.phase==='arrive'&&hs.t>6.5&&!script.length){ hs.phase='down'; hs.t=0;
@@ -1852,7 +1875,8 @@ function makeUFO(variant){
 }
 function ufo(variant,line){
   const U=makeUFO(variant); let t=0; const dir=variant?-1:1;
-  narrate(line||variant?'The little saucer came back, as friends do.':'Somebody else was out flying that evening.');
+  narrate(state.returning?(lumiB.active?'The flying saucer had followed them halfway home, just to wave goodbye to Lumi.':'The flying saucer had followed them halfway home, just to wave goodbye.')
+    :variant?'The little saucer came back, as friends do.':'Somebody else was out flying that evening.');
   announce(line||(variant?['They came back!','I think it\'s waving at us!']:['Is that a... UFO?!','Hi, aliens!']));
   together([{pose:'wave',dur:7},{pose:'hop',dur:2.5}],[-0.65,0.55]);
   Music.sfx('ufo');
@@ -1905,7 +1929,7 @@ function resetEvents(){ EVENTS.forEach(e=>e.done=false); EVENTS_DOWN.forEach(e=>
 function updateEvents(dt,u){
   near.position.copy(house.position); near.quaternion.copy(qFrame); near.updateMatrixWorld();
   if(state.started&&!state.landed&&!state.returning&&!state.home) EVENTS.forEach(e=>{ if(!e.done&&u>=e.u){ e.done=true; activeEvents.push(e.fn()); } });
-  if(state.returning) EVENTS_DOWN.forEach(e=>{ if(!e.done&&u<=e.u){ e.done=true; activeEvents.push(e.fn()); } });
+  if(state.returning&&!state.finale) EVENTS_DOWN.forEach(e=>{ if(!e.done&&u<=e.u){ e.done=true; activeEvents.push(e.fn()); } });
   activeEvents=activeEvents.filter(a=>{ const alive=a.update(dt); if(!alive) a.dispose(); return alive; });
   /* cloud bank: tint to the sky, whiten the air while inside, and let the girls notice */
   bankMat.color.copy(skyU.mid.value).lerp(new THREE.Color(0xffffff),0.55);
@@ -2211,7 +2235,7 @@ const LUMI_TRIP={
 function updateLumi(dt){
   if(!state.landed||state.callHome) return;
   moonT+=dt; lumiStageT+=dt;
-  if(lumiStage===0&&moonT>50&&!ladderBusy()){
+  if(lumiStage===0&&moonT>65&&!ladderBusy()){
     lumiStage=1; lumiStageT=0; lumiB.active=true; lumi.g.visible=true; lumiB.zone='ground'; lumiB.pos.set(LUMI_HIDE[0],LUMI_HIDE[1]); lumiB.y=groundY(LUMI_HIDE[0],LUMI_HIDE[1]);
     lumiB.face=lumiB.faceT=faceTo(LUMI_HIDE,[3.5,6.5]); setPose(lumiB,'doorpeek',lumiB.face);
     HOP.claimed=null; castles.forEach(c=>{ if(c.claimed&&!c.g.visible) c.claimed=false; });
@@ -2371,7 +2395,7 @@ function frame(now){
       if(idx===6) together([{pose:'look',dur:9},{pose:'hop',dur:3}],[-0.9,0.4]); } }
 
   updateMarks(u,starA);
-  updateSpeech(dt); updateNarrator(dt);
+  updateSpeech(dt); updateNarrator(dt); revealMoonProps(rawDt);
   renderer.render(scene,camera);
   requestAnimationFrame(frame);
 }
