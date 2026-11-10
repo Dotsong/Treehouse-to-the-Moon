@@ -1894,6 +1894,7 @@ const PREP=[
   [6.0, ()=>{ setPose(pipB,'idle',-1.3); say(0,'Balloons?'); setPose(juneB,'look',0.9); }],
   [7.8, ()=>{ say(1,'Fifty balloons, tied tight. Check!'); setPose(pipB,'look',-1.3); }],
   [10.8,()=>{ setPose(juneB,'idle',0.9); setPose(pipB,'idle',-1.3); say(0,'Snacks for the trip?'); }],
+  [12.0,()=>{ goPose(juneB,[-1.6,1.75],'idle',1.65); }],
   [12.6,()=>{ say(1,'Be right back!'); goPose(pipB,[0.5,-1.2],'inside',0); }],
   [18.0,()=>{ goPose(pipB,[0.95,1.35],'hop',-1.3); }],
   [22.6,()=>{ say(1,'Cookies! Check!'); }],
