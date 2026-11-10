@@ -1302,7 +1302,7 @@ const curve=new THREE.CatmullRomCurve3([
 curve.arcLengthDivisions=3000;
 
 /* shooting stars */
-const shooters=[]; let lastShootT=-99;
+const shooters=[]; let lastShootT=-99, lastShootLine=-999;
 function spawnShooter(radiant){
   const dir=radiant?radiant.clone().add(new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(0.9)).normalize():new THREE.Vector3(rnd()*2-1,rnd()*2-1,rnd()*2-1).normalize();
   const start=camera.position.clone().addScaledVector(dir,4000);
@@ -1312,7 +1312,7 @@ function spawnShooter(radiant){
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
   const line=new THREE.Line(g,new THREE.LineBasicMaterial({color:0xfff6ec,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
   scene.add(line); shooters.push({line,start,vel,age:0}); lastShootT=time;
-  if(!radiant&&quiet()&&Math.random()<0.3){ speak(SHOOT_LINES[Math.floor(Math.random()*2)]); speakIn=8; }
+  if(!radiant&&quiet()&&time-lastShootLine>90&&Math.random()<0.2){ lastShootLine=time; speak(nextLine('shoot',SHOOT_LINES)); speakIn=8; }
 }
 
 /* ---------- music: generated live ---------- */
@@ -1468,7 +1468,7 @@ const POSE_LINES={peek:['Peekaboo!','Boo!','Can you see me?','Hiding!'],inside:[
   build:['Building a moon castle!','Moon dust makes great castles.','It needs one more tower!'],pickup:['This one\'s a keeper!','A souvenir for Grandma!'],drop:['Into the bucket!'],
   moonhop:['Boing! Moon jumps!','I\'m so floaty!','Look how high I go!'],scoop:['A moon rock!','This one\'s sparkly.','For my collection!'],
   flag:['I claim this Moon for us!','Our very own flag!'],climb:['Careful on the ladder!','Here I come, Moon!','Don\'t look down... okay, I looked.']};
-const SHOOT_LINES=[['Shooting star!','Make a wish!'],['Did you see that?','A shooting star!']];
+const SHOOT_LINES=[['Shooting star!','Make a wish!'],['Did you see that?','A shooting star!'],['What did you wish for?','It\'s a secret!'],'I made a wish!',['Another one!','The sky is showing off.']];
 const bubbles=[{el:$('bubJune'),b:juneB,head:june.head,root:june.g,t:0},{el:$('bubPip'),b:pipB,head:pip.head,root:pip.g,t:0},
   {el:$('bubMom'),head:mom.head,root:mom.g,t:0},{el:$('bubDad'),head:dad.head,root:dad.g,t:0},{el:$('bubLumi'),b:lumiB,head:lumi.head,root:lumi.g,t:0}];
 let script=[], scriptWait=0;
@@ -2121,6 +2121,35 @@ function updateLumi(dt){
   }
   else if(lumiStage===4&&lumiStageT>3&&!script.length&&quiet()){ lumiStage=5; callHome(); }
 }
+
+/* lots more to talk about along the way */
+const MORE_LINES={
+  yard:[['Hold on, Pip!','I AM holding on!'],'The oak tree is waving goodbye.',['Mom\'s going to look out the window...','...and we\'ll be a tiny dot!'],'Our treehouse can FLY!'],
+  low:[['There\'s our school!','No homework on the Moon!'],['Look, a soccer game!','They look like ants!'],'The river looks like a ribbon.',['Is that the town?','It looks like a toy village!'],['Wave to the cows!','Moo-oo!'],'Michelle\'s house is right down there!'],
+  clouds:[['Is a cloud soft?','Only one way to find out.'],'I can see the mountains now!',['Clouds have shadows!','Like whales swimming on the ground.'],['My ears just popped!','Mine too! Pop!'],'It\'s getting chilly up here.'],
+  above:[['Look how round the Earth is!','It really IS a ball!'],'The sky keeps getting darker.',['Where did the clouds go?','Way down there now.'],['How high are we?','Higher than the planes!'],'I can see the whole city from up here.'],
+  space:[['I feel like an astronaut.','Astronauts don\'t have treehouses.'],['Is that a whole ocean?','It\'s so BIG.'],'Hi, satellites!',['Let\'s count the balloons.','Fifty! Still fifty.'],['Do you think aliens have treehouses?','The fancy ones do.'],'Earth is so pretty.'],
+  long:[['Want a cookie?','Two, please.'],['What should we do first on the Moon?','Jump! As high as we can!'],'I wonder what the Moon feels like.',['Tell me a story.','Once upon a time, two sisters floated to the Moon...'],['Do you think anyone lives up there?','Just rocks. Probably.'],'My legs are wiggly from sitting.'],
+  almost:[['Look at all the craters!','Like a giant cookie.'],['Should we land by that big rock?','Gently! Gently!'],'I can see mountains on the Moon!',['Ready?','Ready!']],
+  landed:[['The Moon is so quiet.','Shh, you can hear your heart.'],['Race you to that crater!','A slow-motion race!'],'The ground is like powdered sugar.',['Do you think Michelle can see us?','Wave, just in case!'],['Our house is a tiny dot from here.','Somewhere on that blue ball.'],'I\'m the highest jumper in the universe!',['Is it daytime or nighttime here?','Both! The sky is black, but the sun is out.']],
+  h_leave:[['Bye, Moon! Thanks for having us!','We\'ll write!'],'My shoes are full of moon dust.'],
+  h_space:[['Should we tell Mom about the UFO?','She\'ll think we made it up.'],['That was the best trip ever.','The bestest.']],
+  h_long:[['Look, a city is turning on its lights.','Like birthday candles!'],'I want to tell Michelle everything all at once.'],
+  h_sky:[['Do you hear that?','The quiet? Me too.'],['I can see our town!','And the river!']],
+  h_clouds:[['Cloud tunnel!','Wheee!'],'Almost home, almost home...'],
+  h_low:[['Do you think there are meatballs?','There are ALWAYS meatballs.'],'Home sweet home!']
+};
+for(const k in MORE_LINES) LINES[k].push(...MORE_LINES[k]);
+POSE_LINES.peek.push('I see you!'); POSE_LINES.inside.push('Snack time!'); POSE_LINES.moonhop.push('Higher! Higher!');
+POSE_LINES.look.push('Hi, Earth!','I can see our whole planet.');
+LUMI_MOON.push(
+  [[4,'Watch me float! ...Okay, I\'m jumping. But it\'s almost floating.'],[1,'It totally looks like floating!']],
+  [[0,'What\'s your favorite thing about the Moon?'],[4,'The view of Earth. Every single night.']],
+  [[1,'Do you have a treehouse up here?'],[4,'I have a boulder house. It\'s very cozy.']],
+  [[4,'Do Earth kids play hopscotch every day?'],[0,'Only when it\'s not raining.'],[4,'What\'s raining?']]);
+LUMI_TRIP.space.push([[4,'My boulder looks so small now.'],[0,'You can visit it again!']]);
+LUMI_TRIP.sky.push([[4,'Your sky is so busy. Clouds, birds, planes...'],[1,'And lights!']]);
+LUMI_TRIP.low.push([[4,'Does Michelle like moon girls?'],[1,'She\'s going to love you!']]);
 
 /* ---------- loop ---------- */
 const up=new THREE.Vector3(), off=new THREE.Vector3(), target=new THREE.Vector3(), qFrame=new THREE.Quaternion(), qSway=new THREE.Quaternion(), eul=new THREE.Euler();
