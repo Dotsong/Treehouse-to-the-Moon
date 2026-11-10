@@ -1,9 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Treehouse to the Moon</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="fonts/fonts.css">
@@ -262,8 +256,7 @@ body.is-paused .narrator{opacity:0}
 @media (max-width:640px){ .narrator{top:calc(104px + env(safe-area-inset-top, 0px));width:calc(100vw - 96px)} }
 @media (prefers-reduced-motion:reduce){ .narrator{transform:translate(-50%,0);transition:opacity .6s} }
 </style>
-</head>
-<body>
+
 <canvas id="scene" aria-label="A treehouse lifted by balloons drifting toward the Moon"></canvas>
 
 <div class="alt hud-off" id="alt">
@@ -2340,7 +2333,7 @@ function frame(now){
   followK=damp(followK,hs&&hs.phase==='walk'?1:0,0.5,dt);
   /* before liftoff the camera sits close on the balloons; at liftoff it glides out to the usual view */
   introK=damp(introK,(state.started||prep)?0:1,0.75,rawDt); const ik=introK*introK*(3-2*introK);
-  const r=lerp(rAt(u)*zoom*aspectBoost*(1+0.3*landT),8.2*Math.max(1,aspectBoost*0.8),ik);
+  const r=lerp(rAt(u)*zoom*aspectBoost*(1+0.3*landT),5.6*Math.max(1,aspectBoost*0.7),ik);
   const ph=lerp(clamp(phiAt(u)+userPhi+landT*(state.home?0.38:0.15),-0.55,1.3),0.06+Math.sin(time*0.13)*0.04,ik);
   const th=camTheta+ik*Math.sin(time*0.09)*0.25;
   off.set(Math.sin(th)*Math.cos(ph),Math.sin(ph),Math.cos(th)*Math.cos(ph)).multiplyScalar(r).applyQuaternion(qFrame);
@@ -2400,5 +2393,3 @@ moon.receiveShadow=true; earth.receiveShadow=true;
 requestAnimationFrame(frame);
 })();
 </script>
-</body>
-</html>
