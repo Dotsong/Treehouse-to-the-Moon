@@ -256,6 +256,14 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 @media (prefers-reduced-motion:reduce){
   .caption{transform:none;transition:opacity .6s}
 }
+/* the narrator: a line of the story at the top of the screen, in the same storybook face as the chapter titles at the bottom left */
+.narrator{position:fixed;z-index:3;left:50%;top:calc(20px + env(safe-area-inset-top, 0px));transform:translate(-50%,-8px);width:min(36rem, calc(100vw - 300px));margin:0;
+  text-align:center;text-wrap:balance;font:400 clamp(1.08rem, 2.5vw, 1.45rem)/1.3 var(--display);color:var(--ink);
+  text-shadow:0 2px 18px rgba(10,8,30,.7), 0 1px 3px rgba(10,8,30,.55);opacity:0;pointer-events:none;transition:opacity 1.3s ease, transform 1.3s ease}
+.narrator.show{opacity:1;transform:translate(-50%,0)}
+body.is-paused .narrator{opacity:0}
+@media (max-width:640px){ .narrator{top:calc(104px + env(safe-area-inset-top, 0px));width:calc(100vw - 96px)} }
+@media (prefers-reduced-motion:reduce){ .narrator{transform:translate(-50%,0);transition:opacity .6s} }
 </style>
 </head>
 <body>
@@ -280,6 +288,8 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 <div class="say mom" id="bubMom" aria-live="polite"><div class="bub"><span class="who">Mom</span><span class="txt"></span></div></div>
 <div class="say lumi" id="bubLumi" aria-live="polite"><div class="bub"><span class="who">Lumi</span><span class="txt"></span></div></div>
 <div class="say dad" id="bubDad" aria-live="polite"><div class="bub"><span class="who">Dad</span><span class="txt"></span></div></div>
+
+<p class="narrator" id="narrator" aria-live="polite"></p>
 
 <div class="caption" id="caption" aria-live="polite">
   <h2 class="cap-title" id="capTitle"></h2>
@@ -1476,7 +1486,7 @@ function flyAgain(toStart){
   if(bookOpen) closeBook(); autoPaused=false; setPaused(false);
   const f=$('fade'); f.classList.add('on'); hideEnding(); $('againSmall').hidden=true; $('homeSmall').hidden=true; const fi=$('finale'); fi.classList.add('gone');
   setTimeout(()=>{ state.p=0; state.landed=false; chapterAt=-1; camTheta=-Math.PI/4; userPhi=0; zoom=1; capEl.classList.remove('show'); f.classList.remove('on');
-    hushBubbles(); resetEvents(); clearMoonMarks(); landT=0; resetHome(); placeGirls();
+    hushBubbles(); hushNarrator(); resetEvents(); clearMoonMarks(); landT=0; resetHome(); placeGirls();
     if(toStart===true){ /* back to the opening storybook card */
       state.started=false; prep=null; mooring.visible=true; idle=0; $('skipBtn').hidden=true; $('pauseBtn').hidden=true;
       ['alt','rail','controls'].forEach(id=>$(id).classList.add('hud-off'));
@@ -1488,7 +1498,7 @@ $('stayBtn').addEventListener('click',()=>{ hideEnding(); $('homeSmall').hidden=
 $('homeBtn').addEventListener('click',()=>callHome());
 $('homeSmall').addEventListener('click',()=>callHome());
 $('goodnightBtn').addEventListener('click',()=>flyAgain(true));
-function onLand(){ placeBucket(false); hushBubbles(); speak(['We landed!','On the MOON!'],0); together([{pose:'hop',dur:3},{pose:'wave',dur:3.5}],[-0.65,0.55]);
+function onLand(){ narrate('And that is how two sisters came to be standing on the Moon before dinner.'); placeBucket(false); hushBubbles(); speak(['We landed!','On the MOON!'],0); together([{pose:'hop',dur:3},{pose:'wave',dur:3.5}],[-0.65,0.55]);
   BRAINS.forEach((b,i)=>{ const spot=i?[3.6,6.4]:[-2.4,7.0]; b.queue.push(...stepsTo(b.target,'deck',spot),{k:'pose',pose:i?'moonhop':'flag',dur:5.5,face:i?0.4:-0.3}); b.target=spot; }); setTimeout(()=>{ if(!state.landed) return; const en=$('ending'); en.hidden=false; requestAnimationFrame(()=>en.classList.remove('gone')); capEl.classList.remove('show'); },3500); }
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ Music.resume(); if(state.started) keepAwake(); } });
 
@@ -1579,6 +1589,29 @@ function announce(line){ const s=Math.random()<0.5?0:1; if(script.length>2) scri
   if(Array.isArray(line)) script.push([s,line[0]],[1-s,line[1]]); else script.push([s,line]); speakIn=9; }
 function hushBubbles(){ bubbles.forEach(bb=>{bb.t=0;bb.el.classList.remove('show');}); curLine=null; lineGap=0; script=[]; speakIn=4; }
 
+/* ---------- the narrator ---------- */
+/* Tells the story from a little way off, one line at a time at the top of the screen: what is happening to the girls, not what they are saying.
+   narrate(text) queues a line. Lines wait their turn (the newest two are kept) and each stays up long enough to read. When nothing in particular
+   is going on, the narrator now and then remarks on the part of the trip the treehouse has reached. Ported from Trail to the Top. */
+const NARR_AMBIENT={
+  low:['The backyard got smaller and smaller, the way things do when you leave them.','From up here the whole neighborhood looked like a model of itself.'],
+  sky:['Up here the only sound was fifty balloons bumping gently together.','The sky was changing color like a very slow sunset.','Below them the clouds lay flat as a floor.'],
+  space:['Space turned out to be mostly quiet, with snacks.','The Earth hung behind them like a blue lantern.','Nobody was in a hurry. The Moon was not going anywhere.'],
+  almost:['The Moon grew until it filled half the sky.'],
+  moon:['Moon dust keeps every footprint, so the sisters left a great many.','On the Moon, even a small jump feels a little like flying.','The Earth watched over them from the black sky.','There is no wind on the Moon, so everything stays exactly where you leave it.'],
+  home:['Going home always seems quicker than going away.','Below them, the lights of the world were coming on.','The treehouse seemed to know the way.']};
+const NARR_PLACE={yard:'low',low:'low',clouds:'sky',above:'sky',space:'space',long:'space',almost:'almost',landed:'moon',h_leave:'home',h_space:'home',h_long:'home',h_sky:'home',h_clouds:'home',h_low:'home'};
+const narrEl=$('narrator'), narr={q:[],t:0,gap:0,idle:30};
+function narrate(text){ if(!state.started&&!prep) return; if(narr.q.length>1) narr.q.shift(); narr.q.push(text); }
+function hushNarrator(){ narr.q.length=0; narr.t=0; narr.gap=0; narr.idle=30; narrEl.classList.remove('show'); }
+function updateNarrator(dt){
+  if(narr.t>0){ narr.t-=dt; if(narr.t<=0){ narrEl.classList.remove('show'); narr.gap=1.7; } }
+  else if(narr.gap>0) narr.gap-=dt;
+  else if(narr.q.length){ const tx=narr.q.shift(); narrEl.textContent=tx; narrEl.classList.add('show'); narr.t=3.6+tx.length*0.065; narr.idle=34+Math.random()*24; }
+  else if(state.started&&!state.home&&!state.callHome&&!activeEvents.length&&!(state.landed&&lumiStage>0&&lumiStage<3)){ narr.idle-=dt;
+    if(narr.idle<=0){ const p=NARR_PLACE[phaseKey(state.u)]; narrate(nextLine('narr-'+p,NARR_AMBIENT[p])); } }
+}
+
 /* ---------- homecoming: parents, the trip back, dinner ---------- */
 const HOME=new THREE.Vector3(-17,HOVER,-6);
 const DOOR_HOME=new THREE.Vector2(-25.6,-16.4);
@@ -1649,7 +1682,7 @@ const WALK_SCRIPT_L=[[1,'Race you inside!'],[4,'Wait for me! Earth grass is so t
 const toLocal=(x,z)=>[x-HOME.x,z-HOME.z];
 function callHome(){
   if(!state.landed||state.callHome) return;
-  state.callHome=true; hideEnding(); $('homeSmall').hidden=true; $('againSmall').hidden=true;
+  state.callHome=true; narrate('It was time to go. The Moon would still be there tomorrow.'); hideEnding(); $('homeSmall').hidden=true; $('againSmall').hidden=true;
   hushBubbles(); if(lumiB.active) playScript([[0,'Everybody climb aboard!'],[4,'Bye, Moon! I\'ll come back and visit!']]); else speak(['Time to go home for dinner!','Bye, Moon! Bye, flag!'],0);
   ACTIVE().forEach(b=>b.hold='wave');
   together([{pose:'wave',dur:1e9}],[-0.65,0.55]);
@@ -1663,7 +1696,7 @@ function launchHome(){
   ['alt','rail'].forEach(id=>$(id).classList.remove('hud-off'));
 }
 function arriveHome(){
-  state.home=true; homeGround=true; state.returning=false; hs={phase:'arrive',t:0};
+  state.home=true; homeGround=true; state.returning=false; hs={phase:'arrive',t:0}; narrate('Home again, with moon dust still in their shoes.');
   capEl.classList.remove('show'); ['alt','rail'].forEach(id=>$(id).classList.add('hud-off'));
   ACTIVE().forEach(b=>b.hold='wave');
   together([{pose:'hop',dur:2.5},{pose:'wave',dur:1e9}],[-0.65,0.55]);
@@ -1694,7 +1727,7 @@ function updateHome(dt,u){
     PARENTS.forEach((p,i)=>{ const b=BRAINS[i]; p.lookAt=[b.pos.x+HOME.x,b.pos.y+HOME.z]; if(b.cur&&b.cur.pose==='hug') p.pose='hug'; });
     const sistersIn=BRAINS.every(b=>b.cur&&b.cur.pose==='hug');
     if(sistersIn&&lumiB.active&&!hs.lumiSent){ hs.lumiSent=true; const spot=toLocal(-15.4,-1.6); goPose(lumiB,spot,'shy',faceTo([-15.4,-1.6],[-15.45,0.05])); }
-    if((sistersIn&&(!lumiB.active||(lumiB.cur&&lumiB.cur.pose==='shy'))&&hs.t>1)||hs.t>75){ hs.phase='hug'; hs.t=0; playScript(hugScript()); }
+    if((sistersIn&&(!lumiB.active||(lumiB.cur&&lumiB.cur.pose==='shy'))&&hs.t>1)||hs.t>75){ hs.phase='hug'; hs.t=0; playScript(hugScript()); narrate('There was a great deal of hugging.'); }
   }
   if(hs.phase==='hug'&&!script.length&&hs.t>3&&quiet()){ hs.phase='walk'; hs.t=0;
     PARENTS.forEach((p,i)=>{ p.pose='walk'; p.lookAt=null; p.goingIn=true; p.path=[[DOOR_HOME.x+(i?0.8:-0.8),DOOR_HOME.y+3.2],[DOOR_HOME.x,DOOR_HOME.y]]; });
@@ -1702,7 +1735,7 @@ function updateHome(dt,u){
       b.queue.push({k:'walk',path:[toLocal(DOOR_HOME.x,DOOR_HOME.y+3.4),toLocal(DOOR_HOME.x,DOOR_HOME.y)]},{k:'pose',pose:'gone',dur:1e9}); }
     BRAINS.forEach((b,i)=>{ b.cur=null; b.queue.length=0; b.hold='gone';
       b.queue.push({k:'walk',path:[toLocal(DOOR_HOME.x+(i?1.2:-1.2),DOOR_HOME.y+2.2),toLocal(DOOR_HOME.x,DOOR_HOME.y)]},{k:'pose',pose:'gone',dur:1e9}); });
-    playScript(lumiB.active?WALK_SCRIPT_L:WALK_SCRIPT);
+    playScript(lumiB.active?WALK_SCRIPT_L:WALK_SCRIPT); narrate('And then, at last, there was spaghetti.');
   }
   if(hs.phase==='walk'){
     ACTIVE().forEach(b=>{ if(b.cur&&b.cur.pose==='gone'&&b.girl.g.visible){ b.girl.g.visible=false; b.pos.set(999,999); } });
@@ -1742,6 +1775,7 @@ function birdsAcross(){
   const birds=[], offs=[[0,0],[-1,1],[1,1],[-2,2],[2,2],[-3,3],[3,3]];
   offs.forEach(()=>birds.push(makeBird()));
   let t=0; const dur=19;
+  narrate('A line of birds raced the treehouse for a while, and lost.');
   announce(['Birdies!','They\'re racing us!']); Music.sfx('chirp');
   return { update(dt){ t+=dt; const k=t/dur;
       birds.forEach((b,i)=>{ const [ox,oz]=offs[i];
@@ -1751,6 +1785,7 @@ function birdsAcross(){
 }
 function birdsCircle(){
   const birds=[0,1,2,3].map(makeBird); let t=0;
+  narrate('Some curious birds came round for a closer look.');
   announce(['They\'re circling us!','Hi, birds! Want a cookie?']); Music.sfx('chirp');
   const path=(tt,v,i)=>{ const a=tt*0.75+i*0.45;
     const circ=v.set(Math.cos(a)*8.5,5+Math.sin(a*2)*0.8,Math.sin(a)*8.5);
@@ -1784,6 +1819,7 @@ function plane(which,line){
   const P=makePlane(), puffs=[]; let t=0, emit=0; const dur=which?16:14;
   P.g.scale.setScalar(which?1.6:1.2);
   const path=which?(tt,v)=>v.set(lerp(150,-150,tt/dur),32+tt*0.2,lerp(70,40,tt/dur)):(tt,v)=>v.set(lerp(-150,150,tt/dur),1+tt*0.35,lerp(-48,-36,tt/dur));
+  narrate(line?'A night plane blinked its way across the dark.':which?'High above, another plane drew two white lines across the sky.':'A plane went by, full of people who would never believe what they had just seen.');
   announce(line||(which?['Another plane, way up high!','Look at its cloud tails.']:['An airplane!','Hi, passengers!']));
   const wp=new THREE.Vector3();
   return { update(dt){ t+=dt; faceAlong(P.g,path,t);
@@ -1824,6 +1860,7 @@ function makeUFO(variant){
 }
 function ufo(variant,line){
   const U=makeUFO(variant); let t=0; const dir=variant?-1:1;
+  narrate(line||variant?'The little saucer came back, as friends do.':'Somebody else was out flying that evening.');
   announce(line||(variant?['They came back!','I think it\'s waving at us!']:['Is that a... UFO?!','Hi, aliens!']));
   together([{pose:'wave',dur:7},{pose:'hop',dur:2.5}],[-0.65,0.55]);
   Music.sfx('ufo');
@@ -1846,6 +1883,7 @@ function ufo(variant,line){
 
 function meteorShower(line){
   const radiant=new THREE.Vector3(0.4,0.75,-0.5).normalize(); let t=0, next=0;
+  narrate(line?'The stars came out to see them home.':'Then the sky began to throw stars.');
   announce(line||['A meteor shower!','Make ALL the wishes!']);
   return { update(dt){ t+=dt; next-=dt; if(next<=0&&t<10){ next=0.25+Math.random()*0.45; spawnShooter(radiant); } return t<11; }, dispose(){} };
 }
@@ -1883,11 +1921,11 @@ function updateEvents(dt,u){
   const dy=house.position.y-bankY, inBank=u<0.3?1-smooth(5,20,Math.abs(dy)):0;
   if(inBank>0){ scene.fog.density+=0.05*inBank; scene.fog.color.lerp(new THREE.Color(0xfff3f0),inBank*0.8); }
   if(state.returning){
-    if(bankSaid<3&&dy<30&&dy>0){ bankSaid=3; announce(['Here comes the cloud again!','It\'s all silvery at night.']); }
+    if(bankSaid<3&&dy<30&&dy>0){ bankSaid=3; narrate('The big cloud was still there on the way down, silver now.'); announce(['Here comes the cloud again!','It\'s all silvery at night.']); }
     else if(bankSaid===3&&dy<-18){ bankSaid=4; announce(['I see the town lights!','Almost home!']); }
   }
   else if(state.started&&!state.landed&&!state.home){
-    if(bankSaid===0&&dy>-30){ bankSaid=1; announce(['Here comes a big cloud!','Hold your breath!']); }
+    if(bankSaid===0&&dy>-30){ bankSaid=1; narrate('A cloud as big as a town was waiting just overhead.'); announce(['Here comes a big cloud!','Hold your breath!']); }
     else if(bankSaid===1&&dy>-3){ bankSaid=5; announce(['I\'m inside a cloud!','You\'re all damp now.']); }
     else if(bankSaid===5&&dy>18){ bankSaid=2; announce(['We made it through!','My hair is all fluffy now.']); }
   }
@@ -2128,10 +2166,11 @@ function startPrep(){
   const intro=$('intro'); intro.classList.add('gone'); setTimeout(()=>intro.hidden=true,1500);
   ['alt','rail','controls'].forEach(id=>$(id).classList.remove('hud-off'));
   $('skipBtn').hidden=false; prep={t:0,i:0};
+  setTimeout(()=>{ if(prep) narrate('Every night June and Pip said goodnight to the Moon. Tonight they were going to visit it.'); },1400);
 }
 function beginFlight(){
   prep=null; $('skipBtn').hidden=true; mooring.visible=false;
-  state.started=true; idle=0;
+  state.started=true; idle=0; narrate('Fifty balloons turned out to be exactly enough.');
   BRAINS.forEach(b=>b.hold=null);
   together([{pose:'wave',dur:13+Math.random()*2}],[-0.65,0.55]);
 }
@@ -2185,19 +2224,19 @@ function updateLumi(dt){
     lumiB.face=lumiB.faceT=faceTo(LUMI_HIDE,[3.5,6.5]); setPose(lumiB,'doorpeek',lumiB.face);
     HOP.claimed=null; castles.forEach(c=>{ if(c.claimed&&!c.g.visible) c.claimed=false; });
     goPose(juneB,[3.3,7.3],'idle',faceTo([3.3,7.3],BOULDER)); goPose(pipB,[4.8,6.4],'idle',faceTo([4.8,6.4],BOULDER));
-    hushBubbles(); playScript(SPOT_SCRIPT);
+    hushBubbles(); playScript(SPOT_SCRIPT); narrate('It turned out they were not the only ones up there.');
   }
   else if(lumiStage===1&&lumiStageT>4&&!script.length&&quiet()){
     lumiStage=2; lumiStageT=0; goPose(lumiB,[4.9,8.2],'wave',faceTo([4.9,8.2],[4,6.9])); playScript(meetScript());
   }
   else if(lumiStage===2&&!script.length&&quiet()){
-    lumiStage=3; lumiStageT=0; lumiHungryAt=moonT+130;
+    lumiStage=3; lumiStageT=0; lumiHungryAt=moonT+130; narrate('Her name was Lumi, and she had been hoping for visitors for a very long time.');
     ACTIVE().forEach(b=>{ b.hold=null; b.cur=null; b.queue.length=0; b.target=null; });
   }
   else if(lumiStage===3&&moonT>lumiHungryAt&&!ladderBusy()){
     lumiStage=4; lumiStageT=0; HOP.claimed=null;
     goPose(juneB,[1.0,6.4],'idle',faceTo([1.0,6.4],[1.9,7.4])); goPose(pipB,[2.7,6.9],'idle',faceTo([2.7,6.9],[1.6,7.4]));
-    goPose(lumiB,[1.8,8.1],'idle',faceTo([1.8,8.1],[1.9,6.6])); hushBubbles(); playScript(HUNGRY_SCRIPT);
+    goPose(lumiB,[1.8,8.1],'idle',faceTo([1.8,8.1],[1.9,6.6])); hushBubbles(); playScript(HUNGRY_SCRIPT); narrate('All that hopping had made everybody hungry.');
   }
   else if(lumiStage===4&&lumiStageT>3&&!script.length&&quiet()){ lumiStage=5; callHome(); }
 }
@@ -2333,7 +2372,7 @@ function frame(now){
       if(idx===6) together([{pose:'look',dur:9},{pose:'hop',dur:3}],[-0.9,0.4]); } }
 
   updateMarks(u,starA);
-  updateSpeech(dt);
+  updateSpeech(dt); updateNarrator(dt);
   renderer.render(scene,camera);
   requestAnimationFrame(frame);
 }
