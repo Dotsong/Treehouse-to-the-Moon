@@ -1864,6 +1864,7 @@ const placed=[];
 const LAYERS=[[12,'tropo','Troposphere'],[50,'strato','Stratosphere'],[85,'meso','Mesosphere'],[600,'thermo','Thermosphere'],[10000,'exo','Exosphere'],[1e12,'space','Outer space']];
 let chipKey='tropo';
 function updateMarks(u,starA){
+  scene.updateMatrixWorld();
   camera.updateMatrixWorld();
   const show=(state.started||prep)&&!bookOpen;
   marksEl.classList.toggle('compact',!paused);
