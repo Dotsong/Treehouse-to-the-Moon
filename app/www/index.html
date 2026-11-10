@@ -1569,7 +1569,8 @@ function updateSpeech(dt){
     const vis=bb.root.visible&&hp.z<1&&x>-80&&x<innerWidth+80&&y>-40&&y<innerHeight+120;
     if(vis&&bb.t>0){ sx+=x; n++; }
     bb.el.style.transform=`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`; bb.el.style.visibility=vis?'visible':'hidden'; });
-  bubbles.forEach((bb,i)=>bb.el.classList.toggle('right',xs[i]>innerWidth/2));
+  /* a bubble opens toward the middle of the screen, so it never runs off an edge */
+  bubbles.forEach((bb,i)=>bb.el.classList.toggle('right',xs[i]<innerWidth/2));
 }
 /* sky events wait for whoever is talking instead of cutting them off */
 function announce(line){ const s=Math.random()<0.5?0:1; if(script.length>2) script.length=2;
