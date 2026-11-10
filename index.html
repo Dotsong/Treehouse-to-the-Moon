@@ -480,6 +480,9 @@ function moonTexture(){
 const moonTex=moonTexture();
 const moon=new THREE.Mesh(new THREE.SphereGeometry(MR,192,128),new THREE.MeshStandardMaterial({map:moonTex,bumpMap:moonTex,bumpScale:0.8,roughness:1,metalness:0,fog:false}));
 moon.position.copy(MC); scene.add(moon);
+/* a small soft halo that only shows while the Moon is far away */
+const moonHalo=new THREE.Sprite(new THREE.SpriteMaterial({map:spriteTex,color:0xfff2d8,transparent:true,opacity:0,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
+moonHalo.position.copy(MC); moonHalo.scale.setScalar(MR*2.3); moonHalo.renderOrder=-1; scene.add(moonHalo);
 
 /* landing site, oriented so Earth rises over the lunar horizon */
 const N=new THREE.Vector3(-1,-0.3,1).normalize();
@@ -2222,6 +2225,7 @@ function frame(now){
   cloudMat.emissive.set(0x3a2c44).lerp(new THREE.Color(0x14123a),Math.max(smooth(0.05,0.2,u),nightK));
   cloudMat.color.set(0xffffff).lerp(new THREE.Color(0x9aa4d4),nightK);
   const camEarth=camera.position.distanceTo(EC);
+  moonHalo.material.opacity=0.26*smooth(1000,1800,camera.position.distanceTo(MC)); moonHalo.visible=moonHalo.material.opacity>0.004;
   atmo.visible=camEarth>ER*1.05; atmo.material.opacity=0.45*smooth(0.1,0.35,u);
   updateEvents(dt,u);
 
