@@ -137,6 +137,17 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 .marks.compact .lbl{display:none}
 .fm-btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 @keyframes bob{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 4px))}}
+/* facts you haven't read yet: a pulsing ring and a little gold star */
+.fm-btn::before,.layer-chip::before{content:"";position:absolute;inset:-6px;border-radius:999px;border:2.5px solid var(--tint);opacity:0;pointer-events:none;animation:ping 1.7s ease-out infinite}
+.fm-btn::after{content:"";position:absolute;top:-5px;right:-5px;width:11px;height:11px;border-radius:50%;background:#ffd84a;border:2px solid var(--paper);box-shadow:0 0 10px 2px rgba(255,216,74,.85)}
+.layer-chip{position:relative}
+@keyframes ping{0%{opacity:.9;transform:scale(.92)}100%{opacity:0;transform:scale(1.35)}}
+/* facts already in the book: quieter */
+.marks .fm.seen .fm-btn{opacity:.5;filter:saturate(.3);animation:none;box-shadow:0 2px 8px rgba(10,8,30,.25)}
+.marks .fm.seen .fm-btn:hover,.marks .fm.seen .fm-btn:focus-visible{opacity:.9;filter:none}
+.fm.seen .fm-btn::before,.fm.seen .fm-btn::after,.layer-chip.seen::before{display:none}
+.layer-chip.seen{opacity:.7;filter:saturate(.4)}
+@media (prefers-reduced-motion:reduce){ .fm-btn::before,.layer-chip::before{animation:none;opacity:.7;transform:scale(1.08)} }
 
 /* the fact book */
 .book-scrim{position:fixed;inset:0;z-index:8;display:grid;place-items:center;
@@ -1998,11 +2009,13 @@ function updateMarks(u,starA){
           if(placed.some(p=>Math.abs(p[0]-px)<minGap&&Math.abs(p[1]-py)<36)) ok=false;
           else { placed.push([px,py]); w.style.transform=`translate3d(${px.toFixed(1)}px,${py.toFixed(1)}px,0)`; } }
         else ok=false; } }
-    if(w.hidden===ok) w.hidden=!ok; }
+    if(w.hidden===ok) w.hidden=!ok;
+    if(ok){ const seen=found.includes(m.k); if(w.classList.contains('seen')!==seen) w.classList.toggle('seen',seen); } }
   let k, label;
   if(state.landed){ k='moonground'; label='On the Moon'; }
   else { const km=kmAt(u), Lr=LAYERS.find(l=>km<l[0]); k=Lr[1]; label=Lr[2]; }
   if(k!==chipKey){ chipKey=k; $('layerName').textContent=label; const c=$('layerChip'); c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse'); }
+  { const c=$('layerChip'), seen=found.includes(chipKey); if(c.classList.contains('seen')!==seen) c.classList.toggle('seen',seen); }
 }
 
 /* ---------- the final check before liftoff ---------- */
