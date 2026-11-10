@@ -75,7 +75,7 @@ At [appstoreconnect.apple.com](https://appstoreconnect.apple.com), go to **Apps*
 - **App Privacy:** answer **"Data Not Collected"**. The game has no accounts, ads, analytics or tracking. The only thing it saves is which facts you've found, and that stays on the device.
 - **Age rating:** answer **None** to everything, which gives **4+**.
 - **Kids category (optional):** listing it under **Kids** (age band 6–8 suits it) adds extra review checks: no ads, no third-party analytics, and a grown-up check before any outside link. The game already meets those, since it has no outside links at all.
-- **Screenshots:** in the simulator, use **File → Save Screen** (or ⌘S) on the largest iPhone and the largest iPad that App Store Connect asks for. Good moments are the opening card, liftoff, the cloud bank, space, the Moon with Lumi, and dinner at home.
+- **Screenshots:** ready-made ones are in `screenshots/`: eight at **1320×2868** for the 6.9-inch iPhone slot and eight at **2064×2752** for the 13-inch iPad slot. Drag them in, in order. If Apple asks for other sizes later, use **File → Save Screen** (⌘S) in the simulator.
 
 ## 7. Upload and submit
 
