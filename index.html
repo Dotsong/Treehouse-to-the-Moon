@@ -286,8 +286,8 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
   .caption{transform:none;transition:opacity .6s}
 }
 /* the narrator: a line of the story at the top of the screen, in the same storybook face as the chapter titles at the bottom left */
-.narrator{position:fixed;z-index:3;left:50%;top:calc(20px + env(safe-area-inset-top, 0px));transform:translate(-50%,-8px);width:min(36rem, calc(100vw - 300px));margin:0;
-  text-align:center;text-wrap:balance;font:400 clamp(1.08rem, 2.5vw, 1.45rem)/1.3 var(--display);color:var(--ink);
+.narrator{position:fixed;z-index:3;left:50%;top:calc(20px + env(safe-area-inset-top, 0px));transform:translate(-50%,-8px);width:min(42rem, calc(100vw - 300px));margin:0;
+  text-align:center;text-wrap:balance;font:400 clamp(1.3rem, 3vw, 1.8rem)/1.28 var(--display);color:var(--ink);
   text-shadow:0 2px 18px rgba(10,8,30,.7), 0 1px 3px rgba(10,8,30,.55);opacity:0;pointer-events:none;transition:opacity 1.3s ease, transform 1.3s ease}
 .narrator.show{opacity:1;transform:translate(-50%,0)}
 body.is-paused .narrator{opacity:0}
@@ -1672,7 +1672,7 @@ function hushNarrator(){ narr.q.length=0; narr.t=0; narr.gap=0; narr.idle=30; na
 function updateNarrator(dt){
   if(narr.t>0){ narr.t-=dt; if(narr.t<=0){ narrEl.classList.remove('show'); narr.gap=1.7; } }
   else if(narr.gap>0) narr.gap-=dt;
-  else if(narr.q.length){ const tx=narr.q.shift(); narrEl.textContent=tx; narrEl.classList.add('show'); narr.t=3.6+tx.length*0.065; narr.idle=34+Math.random()*24; }
+  else if(narr.q.length){ const tx=narr.q.shift(); narrEl.textContent=tx; narrEl.classList.add('show'); narr.t=(3.6+tx.length*0.065)*1.1; narr.idle=34+Math.random()*24; }
   else if(state.started&&!state.home&&!state.callHome&&!state.finale&&!activeEvents.length&&!(state.landed&&lumiStage>0&&lumiStage<3)){ narr.idle-=dt;
     if(narr.idle<=0){ const p=NARR_PLACE[phaseKey(state.u)]; narrate(nextLine('narr-'+p,NARR_AMBIENT[p])); } }
 }
