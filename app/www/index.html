@@ -937,10 +937,22 @@ function updateJar(t,night){
   p.needsUpdate=true; c.needsUpdate=true; glow/=JAR_N;
   jarLight.intensity=(0.45+0.5*glow)*(1+0.8*night); jarGlow.material.opacity=0.12+0.16*glow+0.08*night;
 }
-const box=(w,h,d,mat,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);house.add(m);return m;};
-{ const wood=L('#8a5a3c'), dark=L('#5e3b27'), wall=L('#7fb3a8'), trim=L('#fbf1e3'), roofM=L('#c95f4c'), doorM=L('#5a3a5e');
+/* The treehouse, modelled more finely: every board and post has softly rounded edges, the walls are vertical boards, the roof is
+   shingled with an overhang and a rounded ridge, the deck is laid in separate planks, and the rails have capped posts and balusters. */
+const box=(w,h,d,mat,x,y,z)=>{ const r=Math.min(0.035,Math.min(w,h,d)*0.3); const m=new THREE.Mesh(r>0.006?hiBox(w,h,d,r,3):new THREE.BoxGeometry(w,h,d),mat); m.position.set(x,y,z); house.add(m); return m; };
+function woodTex(base,kind){ const cv=document.createElement('canvas'); cv.width=cv.height=128; const g=cv.getContext('2d'); g.fillStyle=base; g.fillRect(0,0,128,128); const R=mulberry(kind.length*97);
+  if(kind==='boards'){ for(let x=0;x<128;x+=16){ g.fillStyle='rgba(0,0,0,.13)'; g.fillRect(x,0,2,128); g.fillStyle='rgba(255,255,255,.12)'; g.fillRect(x+2,0,2,128);
+      for(let k=0;k<5;k++){ g.fillStyle=`rgba(60,40,30,${0.03+R()*0.04})`; g.fillRect(x+3+R()*10,R()*128,1,20+R()*40); } } }
+  else if(kind==='shingles'){ for(let y=0;y<128;y+=16){ const off=(y/16)%2?8:0; for(let x=-off;x<128;x+=16){ const s=0.88+R()*0.2; g.fillStyle=`rgba(${s>1?255:0},${s>1?255:0},${s>1?255:0},${Math.abs(s-1)*0.6})`; g.fillRect(x+1,y+1,14,14);
+      g.fillStyle='rgba(60,20,15,.35)'; g.fillRect(x,y+13,16,3); g.fillRect(x,y,1.5,15); } } }
+  else { for(let y=0;y<128;y+=4){ g.fillStyle=`rgba(40,25,15,${0.04+R()*0.08})`; g.fillRect(0,y+R()*2,128,1); } for(let k=0;k<3;k++){ g.strokeStyle='rgba(50,30,20,.25)'; g.beginPath(); g.ellipse(20+R()*90,20+R()*90,4+R()*6,2+R()*3,0,0,6.3); g.stroke(); } }
+  const tx=new THREE.CanvasTexture(cv); tx.wrapS=tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=4; return tx; }
+function mulberry(a){ return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+{ const wood=new THREE.MeshLambertMaterial({map:woodTex('#8a5a3c','grain')}), dark=new THREE.MeshLambertMaterial({map:woodTex('#5e3b27','grain')}), trim=L('#fbf1e3'), doorM=new THREE.MeshLambertMaterial({map:woodTex('#5a3a5e','boards')});
+  const wallTex=woodTex('#7fb3a8','boards'); wallTex.repeat.set(2,1.4); const wall=new THREE.MeshLambertMaterial({map:wallTex});
+  const roofTex=woodTex('#c95f4c','shingles'); roofTex.repeat.set(2.4,3.2); const roofM=new THREE.MeshLambertMaterial({map:roofTex});
   const glow=new THREE.MeshBasicMaterial({color:0xffd48f});
-  box(5,0.35,5,wood,0,-0.175,0);
+  box(5,0.27,5,dark,0,-0.215,0); { const P=['#8a5a3c','#93623f','#835537','#8f5f3d']; for(let i=0;i<16;i++){ const m=new THREE.MeshLambertMaterial({map:woodTex(P[i%4],'grain'+i)}); box(0.3,0.09,5,m,-2.34+i*0.312,-0.045,0); } }   /* deck planks */
   box(5.4,0.3,0.4,dark,0,-0.5,1.6); box(5.4,0.3,0.4,dark,0,-0.5,-1.6);
   /* walls built around a real doorway so the girls can go in and out */
   box(3.2,2.4,0.12,wall,0,1.2,-2.14);
@@ -964,6 +976,8 @@ const box=(w,h,d,mat,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d
   box(0.9,0.75,0.02,glassM,0.6,1.35,0.34);
   box(0.06,0.75,0.14,trim,0.6,1.35,0.36); box(0.9,0.06,0.14,trim,0.6,1.35,0.36);
   box(1.02,0.07,0.16,trim,0.6,1.76,0.36); box(1.08,0.08,0.24,trim,0.6,0.94,0.39); box(0.07,0.82,0.16,trim,0.12,1.35,0.36); box(0.07,0.82,0.16,trim,1.08,1.35,0.36);
+  { const sh=L('#e9a3b4'); box(0.24,0.8,0.05,sh,-0.02,1.35,0.42); box(0.24,0.8,0.05,sh,1.22,1.35,0.42);
+    box(1.0,0.16,0.18,L('#8a5a3c'),0.6,0.84,0.5); [0.25,0.45,0.65,0.85].forEach((x,i)=>{ const f=new THREE.Mesh(new THREE.SphereGeometry(0.06,10,8),new THREE.MeshBasicMaterial({color:[0xff9eb5,0xffd27a,0xc6a8ff,0xff8a7a][i]})); f.position.set(x+0.05,0.96,0.52); house.add(f); }); }   /* shutters and a window box of flowers */
   for(const sx of [-1.54,1.54]){ const o=Math.sign(sx);
     box(0.02,0.7,0.8,glassM,sx,1.35,-0.9);
     box(0.14,0.7,0.06,trim,sx,1.35,-0.9); box(0.14,0.06,0.8,trim,sx,1.35,-0.9);
@@ -976,16 +990,25 @@ const box=(w,h,d,mat,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d
     box(0.09,0.24-(i%3)*0.03,0.18,L(c),-0.43+(i%4)*0.13,0.76-row*0.5+(0.12-(i%3)*0.015)-0.12+0.04,-1.9); });
   const tri=new THREE.Shape(); tri.moveTo(-1.6,0); tri.lineTo(1.6,0); tri.lineTo(0,1.2); tri.closePath();
   [0.4,-2.2].forEach(z=>{const g=new THREE.Mesh(new THREE.ShapeGeometry(tri),L('#7fb3a8',{side:THREE.DoubleSide}));g.position.set(0,2.4,z);house.add(g);});
-  const rl=box(2.45,0.14,3.5,roofM,-0.975,3.02,-0.9); rl.rotation.z=0.588;
-  const rr=box(2.45,0.14,3.5,roofM,0.975,3.02,-0.9); rr.rotation.z=-0.588;
-  box(0.22,0.14,3.6,trim,0,3.66,-0.9);
+  const rl=box(2.55,0.16,3.75,roofM,-1.02,2.99,-0.9); rl.rotation.z=0.588;
+  const rr=box(2.55,0.16,3.75,roofM,1.02,2.99,-0.9); rr.rotation.z=-0.588;
+  { const ridge=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.11,3.85,16),L('#a94a3c')); ridge.rotation.x=Math.PI/2; ridge.position.set(0,3.68,-0.9); house.add(ridge); }
+  for(const s of [-1,1]) for(const z of [1.0,-2.8]){ const f=box(2.55,0.06,0.06,trim,s*1.02,2.93,z); f.rotation.z=-s*0.588; }   /* white fascia boards under the eaves */
+  { const ch=box(0.36,0.75,0.36,L('#b5604c'),0.95,3.55,-1.6); box(0.46,0.1,0.46,L('#8f4c3c'),0.95,3.95,-1.6); }   /* a little stovepipe chimney */
   for(let i=0;i<9;i++) if(i!==7) box(0.1,0.8,0.1,trim,-2.4+i*0.6,0.4,2.4);
   box(0.12,0.85,0.12,trim,1.55,0.42,2.4);
   for(const s of [-1,1]) for(let i=0;i<3;i++) box(0.1,0.8,0.1,trim,s*2.4,0.4,0.6+i*0.6);
-  box(4.0,0.08,0.1,trim,-0.45,0.82,2.4); box(4.0,0.06,0.08,trim,-0.45,0.45,2.4);
-  box(0.1,0.08,2.0,trim,-2.4,0.82,1.45); box(0.1,0.08,2.0,trim,2.4,0.82,1.45);
+  box(4.0,0.08,0.14,trim,-0.45,0.84,2.4); box(4.0,0.06,0.08,trim,-0.45,0.12,2.4);
+  box(0.14,0.08,2.0,trim,-2.4,0.84,1.45); box(0.14,0.08,2.0,trim,2.4,0.84,1.45); box(0.08,0.06,2.0,trim,-2.4,0.12,1.45); box(0.08,0.06,2.0,trim,2.4,0.12,1.45);
+  { const bal=new THREE.CylinderGeometry(0.025,0.025,0.68,8); const bm=trim;   /* round balusters between the posts */
+    const put=(x,z)=>{ const m=new THREE.Mesh(bal,bm); m.position.set(x,0.48,z); house.add(m); };
+    for(let i=0;i<8;i++) if(i!==7) for(const f of [0.2,0.4]) put(-2.4+i*0.6+f*0.6+0.06,2.4);
+    for(const s of [-1,1]) for(let z=0.75;z<2.35;z+=0.2) if(Math.abs((z-0.6)%0.6)>0.1) put(s*2.4,z); }
+  { const cap=new THREE.SphereGeometry(0.075,12,8); [...Array(9).keys()].filter(i=>i!==7).map(i=>[-2.4+i*0.6,2.4]).concat([[-2.4,0.6],[-2.4,1.2],[-2.4,1.8],[2.4,0.6],[2.4,1.2],[2.4,1.8],[1.55,2.4]]).forEach(([x,z])=>{ const m=new THREE.Mesh(cap,trim); m.position.set(x,0.92,z); m.scale.y=0.7; house.add(m); }); }
   const bulbCols=[0xffd27a,0xff9eb5,0x9fd8ff,0xc6a8ff];
-  for(let i=0;i<12;i++){ const b=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,6),new THREE.MeshBasicMaterial({color:bulbCols[i%4]})); b.position.set(-2.3+i*0.33,0.9,2.4); house.add(b); }
+  { const pts=[]; for(let i=0;i<=24;i++){ const x=-2.4+i*0.16; pts.push(new THREE.Vector3(x,0.98-0.06*Math.sin((i%6)/6*Math.PI),2.42)); }
+    const wire=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),60,0.008,4),L('#3b3550')); house.add(wire);
+    for(let i=0;i<12;i++){ const x=-2.3+i*0.33, k=((x+2.4)/0.16)%6/6; const b=new THREE.Mesh(new THREE.SphereGeometry(0.06,14,10),new THREE.MeshBasicMaterial({color:bulbCols[i%4]})); b.scale.y=1.3; b.position.set(x,0.9-0.06*Math.sin(k*Math.PI),2.42); house.add(b); } }
   const lantern=new THREE.Mesh(new THREE.SphereGeometry(0.13,12,8),new THREE.MeshBasicMaterial({color:0xffc070})); lantern.position.set(1.3,1.95,0.75); house.add(lantern);
   const lamp=new THREE.PointLight(0xffb36b,1.3,14,2); lamp.position.set(1.3,1.9,1.0); house.add(lamp);
   /* a jar of fireflies hanging from a hook over the front railing */
@@ -1002,8 +1025,10 @@ const box=(w,h,d,mat,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d
   jarFlies=new THREE.Points(jg,new THREE.PointsMaterial({size:0.11,map:spriteTex,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending})); jarPivot.add(jarFlies);
   jarLight=new THREE.PointLight(0xd8ff8a,0.7,5,2); jarLight.position.y=-0.54; jarPivot.add(jarLight);
   const rope=L('#d8c3a0');
-  [1.65,2.15].forEach(x=>{const r=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,3.6,5),rope); r.position.set(x,-1.8,2.3); house.add(r);});
-  for(let i=0;i<8;i++) box(0.56,0.05,0.08,wood,1.9,-0.35-i*0.42,2.3);
+  [1.65,2.15].forEach(x=>{ for(const tw of [-1,1]){ const pts=[]; for(let j=0;j<=36;j++){ const y=-j*0.1, a=j*0.9+tw*Math.PI/2; pts.push(new THREE.Vector3(x+Math.cos(a)*0.012,y,2.3+Math.sin(a)*0.012)); }
+    house.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),80,0.016,6),rope)); } });   /* two strands twisted together */
+  for(let i=0;i<8;i++){ const r=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,0.56,10),wood); r.rotation.z=Math.PI/2; r.position.set(1.9,-0.35-i*0.42,2.3); house.add(r);
+    for(const x of [1.65,2.15]){ const k=new THREE.Mesh(new THREE.TorusGeometry(0.03,0.012,6,12),rope); k.rotation.y=Math.PI/2; k.position.set(x,-0.35-i*0.42,2.3); house.add(k); } }
 }
 
 /* the sisters */
@@ -2372,17 +2397,17 @@ function updateCamTurn(dt){ if(!camTurn) return; camTurn.t+=dt; let df=camTurn.t
 function viewBasis(){ const th=camTheta+(camTh-camThetaSeen); const f=new THREE.Vector3(-Math.sin(th),0,-Math.cos(th)); return {f,r:new THREE.Vector3().crossVectors(f,new THREE.Vector3(0,1,0))}; }
 const at=(B,a,b,y,out)=>(out||new THREE.Vector3()).copy(B.f).multiplyScalar(a).addScaledVector(B.r,b).setY(y);
 function kites(){ const g=new THREE.Group(); scene.add(g); const ks=[];   /* flown from the fields halfway to the town, so they stay where they are as the treehouse rises past */
-  const mid=new THREE.Vector3().copy(house.position).lerp(new THREE.Vector3(TOWN.x,0,TOWN.z),0.5), H=house.position.y;
+  const tc=new THREE.Vector3(TOWN.x,0,TOWN.z), mid=tc.clone().addScaledVector(tc.clone().sub(house.position).setY(0).normalize(),-(TOWN.r+18)), H=house.position.y;   /* just outside the town, on the near side */
   const COLS=[['#ff6f61','#fff3a3'],['#5b8fd0','#9fd8ff'],['#f2c230','#e2574c'],['#5aa86a','#fff3a3'],['#c6a8ff','#ffffff'],['#ff9eb5','#5b8fd0']];
   COLS.forEach(([c1,c2],i)=>{ const k=new THREE.Group();
     const sh=new THREE.Shape(); sh.moveTo(0,1.4); sh.lineTo(0.9,0); sh.lineTo(0,-1.6); sh.lineTo(-0.9,0); sh.closePath();
     k.add(new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshBasicMaterial({color:c1,side:THREE.DoubleSide})));
     const cross=new THREE.Mesh(new THREE.PlaneGeometry(0.08,2.9),new THREE.MeshBasicMaterial({color:c2,side:THREE.DoubleSide})); cross.position.z=0.01; k.add(cross);
     const tail=[]; for(let j=0;j<8;j++){ const b=new THREE.Mesh(new THREE.PlaneGeometry(0.45,0.22),new THREE.MeshBasicMaterial({color:j%2?c2:c1,side:THREE.DoubleSide})); k.add(b); tail.push(b); }
-    const x=mid.x+(i%3-1)*16+Math.sin(i*2.1)*5, z=mid.z+(Math.floor(i/3)-0.5)*18+Math.cos(i*1.7)*5, y=Math.max(14,H-6+(i%3)*5);
+    const x=mid.x+(i%3-1)*24+Math.sin(i*2.1)*7, z=mid.z+(Math.floor(i/3)-0.5)*26+Math.cos(i*1.7)*7, y=Math.max(22,H+(i%3)*7);
     const strG=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(6,-y-surfY(x,z),3)]);
     k.add(new THREE.Line(strG,new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.55})));
-    k.scale.setScalar(2.2); k.position.set(x,y,z); g.add(k); ks.push({k,tail,x,y,z,ph:i*1.3}); });
+    k.scale.setScalar(3.4); k.position.set(x,y,z); g.add(k); ks.push({k,tail,x,y,z,ph:i*1.3}); });
   narrate('Out over the fields, people were flying kites, and some of them were nearly as high as the treehouse.');
   announce(['Kites! Lots of kites!','Hi, kite people!']); let t=0; lookToward(mid.clone().setY(H),-0.25);
   return { update(dt){ t+=dt; for(const K of ks){ K.k.position.set(K.x+Math.sin(t*0.5+K.ph)*1.5,K.y+Math.sin(t*0.8+K.ph)*1.1,K.z+Math.cos(t*0.4+K.ph)); K.k.lookAt(camera.position); K.k.rotateZ(Math.sin(t*1.2+K.ph)*0.3);
@@ -2821,7 +2846,7 @@ const PREP=[
   {go(){ say(1,'Ready, Captain June!'); setPose(pipB,'hop',-1.3); }, until:()=>quiet()},
   {go(){ setPose(pipB,'idle',-1.3); setPose(juneB,'look',0.9); say(0,'Balloons?'); prep.bal=0.0001; }, until:()=>quiet()},
   {go(){ setPose(pipB,'look',-1.3); say(1,'Fifty balloons, tied tight. Check!'); }, until:()=>quiet()&&prep.bal>=1},
-  {go(){ prep.bal=0; setPose(juneB,'idle',1.4); setPose(pipB,'idle',-1.3); say(0,'Snacks for the trip?'); }, until:()=>quiet()},
+  {go(){ prep.balDone=true; setPose(juneB,'idle',1.4); setPose(pipB,'idle',-1.3); say(0,'Snacks for the trip?'); }, until:()=>quiet()},
   {go(){ setPose(pipB,'scoop',-1.3); say(1,'Nine cookies, right here in my pocket. Check!'); }, until:()=>quiet()},
   {go(){ setPose(pipB,'idle',-1.3); say(0,'Flashlight?'); }, until:()=>quiet()},
   {go(){ setPose(pipB,'wave',-1.3); say(1,'Check!'); }, until:()=>quiet()},
@@ -2973,7 +2998,7 @@ function filmScene(){
   return null; }
 function chooseShot(S){
   const w=curLine?curLine.w:-1;
-  if(S.name==='prep'){ if(prep.bal>0) return 'balloons'; if(prep.i>=12) return 'two'; if(w!==0&&w!==1) return film.id||'two'; return 'ots-'+w; }   /* the sisters: over one girl's shoulder onto the other; the whole porch while Pip unties the rope */
+  if(S.name==='prep'){ if(prep.bal>0&&!prep.balDone) return 'balloons'; if(prep.i>=12) return 'two'; if(w!==0&&w!==1) return film.id||'two'; return 'ots-'+w; }   /* the sisters: over one girl's shoulder onto the other; the whole porch while Pip unties the rope */
   if(S.hidden) return 'through';   /* while Lumi is still hiding behind her boulder, the camera stays behind the girls */
   if(film.sceneT<3.6||w<0) return film.id&&film.sceneT>=3.6?film.id:'through';
   if(S.actors.includes(w)) return 'ots-girls';
@@ -3015,10 +3040,10 @@ function updateFilm(dt){
   if(!S){ film.gaze=false; return; }
   const key=(curLine?curLine.w+':'+curLine.tx:'-')+'|'+(film.sceneT<3.6?'a':'b');
   let cut=false;
-  if(key!==film.key){ film.key=key; const id=chooseShot(S); cut=id!==film.id&&film.id!==''; film.id=id; }
+  if(key!==film.key){ film.key=key; const id=chooseShot(S); cut=id!==film.id&&film.id!==''; if(film.id==='balloons'&&id!=='balloons'){ cut=false; film.glide=1; } film.id=id; }   /* out of the balloon shot the camera settles gently onto the girls, never jumps */
   placeShot(S,film.id);
   if(film.k<0.02||(cut&&film.k>0.6&&film.id!=='two')){ film.pos.copy(film.p); film.look.copy(film.l); }
-  else { const q=1-Math.exp(-2.6*dt); film.pos.lerp(film.p,q); film.look.lerp(film.l,q); }
+  else { if(film.glide>0) film.glide=Math.max(0,film.glide-dt/2.5); const q=1-Math.exp(-(film.glide>0?1.2:2.6)*dt); film.pos.lerp(film.p,q); film.look.lerp(film.l,q); }
   /* who everyone looks at: the speaker; while nobody speaks, the girls look at whoever they are meeting */
   film.gaze=true; film.S=S; }
 /* turn a head toward film.gazeAt, on top of whatever pose it is in (called after the pose is applied) */
