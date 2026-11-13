@@ -12,7 +12,7 @@ const stub=fs.readFileSync(path.join(__dirname,'three-stub.js'),'utf8');
     if(u.includes('three')) return r.fulfill({body:stub,contentType:'application/javascript'});
     if(u.startsWith('file:')) return r.continue(); return r.abort(); });
   await p.goto('file://'+page); await p.waitForTimeout(800);
-  await p.click('#splashBtn'); await p.waitForTimeout(1500);
+  await p.click('#splashBtn'); await p.waitForTimeout(1500); await p.click('#howBtn'); await p.waitForTimeout(1500);
   const splashGone=await p.evaluate(()=>document.getElementById('splash').hidden);
   await p.click('#beginBtn'); await p.waitForTimeout(3000);
   await p.evaluate(()=>document.getElementById('bookBtn').click()); await p.waitForTimeout(500);

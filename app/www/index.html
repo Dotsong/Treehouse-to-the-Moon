@@ -28,6 +28,7 @@
   color-scheme:dark;
 }
 [hidden]{display:none!important}
+html{font-size:calc(16px * var(--ts, 1.15))}   /* every size is measured from this, so the text-size setting scales all of it together */
 html,body,button{touch-action:manipulation}
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .book-scrim,.story{-webkit-user-select:text;user-select:text}
@@ -48,12 +49,28 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .intro.gone,.ending.gone{opacity:0;pointer-events:none}
 /* ---------- splash: the Slowdown Storytime title page, shown once when the game opens ---------- */
 .splash{--peri:#3c418f;--peri-deep:#262a66;--peri-glow:#5d63b8;--cream:#fff4dc;
-  position:fixed;inset:0;z-index:8;display:grid;place-items:center;overflow:auto;text-align:center;color:#fff;
+  position:fixed;inset:0;z-index:9;display:grid;place-items:center;overflow:auto;text-align:center;color:#fff;
   padding-block:calc(28px + env(safe-area-inset-top, 0px)) calc(28px + env(safe-area-inset-bottom, 0px));
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
   background:radial-gradient(ellipse 80% 70% at 50% 38%, var(--peri-glow) 0%, var(--peri) 48%, var(--peri-deep) 100%);
   transition:opacity 1.2s ease}
 .splash.gone{opacity:0;pointer-events:none}
+.howto{z-index:8}
+.howto h1{margin:0;font:400 clamp(2rem,7vw,3rem)/1 var(--display);text-shadow:0 3px 18px rgba(14,12,50,.35)}
+.how-list{list-style:none;margin:0;padding:0;display:grid;gap:12px;text-align:left;max-width:31rem}
+.how-list li{display:grid;grid-template-columns:2.6rem 1fr;gap:12px;align-items:center;background:rgba(255,255,255,.1);border-radius:16px;padding:.7rem .9rem;font:500 1rem/1.45 var(--ui);color:rgba(255,255,255,.9)}
+.how-list svg{width:2.4rem;height:2.4rem}
+.how-list strong{color:#fff}
+.zone-card{position:relative;width:min(600px,100%);max-height:100%;overflow:auto;background:#fff6ec;color:#3a2540;border-radius:18px;padding:20px 20px 18px;box-shadow:0 18px 50px rgba(14,12,40,.45)}
+.zone-card h2{font:400 1.5rem/1.1 var(--display);margin:0 48px 4px 0}
+.zone-card p{font:500 .85rem/1.45 var(--ui);margin:0 48px 6px 0;opacity:.75}
+.zone-card h3{font:700 .72rem/1 var(--ui);letter-spacing:.12em;text-transform:uppercase;margin:16px 0 7px;opacity:.6}
+.zone-row{display:flex;flex-wrap:wrap;gap:7px}
+.set-size button[aria-pressed="true"]{background:#d0607a;color:#fff;border-color:transparent}
+.set-sample{font:700 .92rem/1.3 var(--ui);margin:8px 0 0!important;opacity:1!important}
+.zone-card button{font:600 .85rem/1 var(--ui);min-height:40px;padding:.6rem .85rem;color:#3a2540;background:#fff;border:1.5px solid rgba(58,37,64,.22);-webkit-backdrop-filter:none;backdrop-filter:none}
+.zone-card button:hover{background:#ffe1d0;border-color:rgba(58,37,64,.4)}
+.zone-card .zone-close{position:absolute;top:10px;right:10px;width:40px;padding:0;display:grid;place-items:center;font-size:1.1rem}
 .splash-in{display:flex;flex-direction:column;align-items:center;gap:22px;max-width:34rem}
 .splash .mark{width:clamp(108px,26vmin,170px);height:auto;overflow:visible;animation:markFloat 6s ease-in-out infinite}
 .splash .mark .moon{transform-origin:60px 40px;animation:moonRock 7s ease-in-out infinite}
@@ -111,7 +128,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 .controls{position:fixed;z-index:4;right:max(16px, env(safe-area-inset-right, 0px));bottom:calc(16px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .controls button{font-size:.85rem;padding:.6rem .95rem}
 .say{position:fixed;left:0;top:0;z-index:3;pointer-events:none;will-change:transform}
-.bub{position:absolute;bottom:34px;left:0;width:max-content;max-width:min(220px,46vw);padding:9px 13px 10px;border-radius:18px;
+.bub{position:absolute;bottom:34px;left:0;width:max-content;max-width:min(calc(220px * var(--ts, 1.15)),58vw);padding:9px 13px 10px;border-radius:18px;
   background:var(--bubble);color:var(--bubble-ink);font:700 .92rem/1.3 var(--ui);border:2.5px solid var(--june);
   box-shadow:0 6px 20px rgba(10,8,30,.35);transform:translateX(-82%) scale(.6);transform-origin:82% 100%;opacity:0;
   transition:opacity .35s ease, transform .45s cubic-bezier(.3,1.6,.5,1);text-wrap:balance}
@@ -139,8 +156,10 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 .pause svg{width:26px;height:26px;display:block}
 .pause .i-play{display:none} .pause.on .i-play{display:block} .pause.on .i-pause{display:none}
 .pause.on{animation:breathe 2.4s ease-in-out infinite}
+.book-btn{top:calc(86px + env(safe-area-inset-top, 0px));background:#bfe3c0} .book-btn:hover{background:#d6f0d2} .book-btn svg{width:36px;height:36px}
+.book-n{position:absolute;right:-6px;bottom:-6px;min-width:1.5rem;padding:.15rem .3rem;border-radius:99px;background:var(--paper);color:#2a1a33;font:700 .72rem/1.1 var(--ui);box-shadow:0 2px 6px rgba(10,8,30,.35)}
 @keyframes breathe{50%{box-shadow:0 8px 24px rgba(10,8,30,.45),0 0 0 10px rgba(255,201,168,.18), inset 0 -5px 0 rgba(90,40,40,.12)}}
-.paused-banner{position:fixed;z-index:4;left:50%;top:calc(88px + env(safe-area-inset-top, 0px));max-width:calc(100vw - 32px);
+.paused-banner{position:fixed;z-index:4;left:50%;bottom:calc(26px + env(safe-area-inset-bottom, 0px));   /* low on the screen, clear of the narrator's line at the top */max-width:calc(100vw - 32px);
   transform:translate(-50%,-10px);opacity:0;pointer-events:none;transition:opacity .4s, transform .4s;
   background:var(--paper);color:var(--book-ink);border:2.5px solid var(--accent);border-radius:999px;padding:9px 18px;
   font:400 1.15rem/1.2 var(--hand);text-align:center;box-shadow:0 8px 22px rgba(10,8,30,.35)}
@@ -284,17 +303,14 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
   .caption{transform:none;transition:opacity .6s}
 }
 /* the narrator: a line of the story at the top of the screen, in the same storybook face as the chapter titles at the bottom left */
-.narrator{position:fixed;z-index:3;left:50%;top:calc(20px + env(safe-area-inset-top, 0px));transform:translate(-50%,-8px);width:min(42rem, calc(100vw - 300px));margin:0;
+.narrator{position:fixed;z-index:3;left:50%;top:calc(20px + env(safe-area-inset-top, 0px));transform:translate(-50%,-8px);width:min(44rem, calc(100vw - 220px));margin:0;
   text-align:center;text-wrap:balance;font:400 clamp(1.35rem, 3.2vw, 1.85rem)/1.28 var(--display);color:var(--ink);
-  /* a thick dark outline and a soft warm glow. Both are built from shadows sized to the letters (in em), which every phone browser draws
-     the same way: the outline is a ring of hard dark shadows right round each letter, and the glow sits outside that, so it can never
-     wash over the words themselves. */
-  text-shadow:0.07em 0em 0 rgba(34,24,52,.95), -0.07em 0em 0 rgba(34,24,52,.95), 0em 0.07em 0 rgba(34,24,52,.95), 0em -0.07em 0 rgba(34,24,52,.95), 0.05em 0.05em 0 rgba(34,24,52,.95), -0.05em 0.05em 0 rgba(34,24,52,.95), 0.05em -0.05em 0 rgba(34,24,52,.95), -0.05em -0.05em 0 rgba(34,24,52,.95), 0.1em 0em 0 rgba(34,24,52,.95), -0.1em 0em 0 rgba(34,24,52,.95), 0em 0.1em 0 rgba(34,24,52,.95), 0em -0.1em 0 rgba(34,24,52,.95), 0.075em 0.075em 0 rgba(34,24,52,.95), -0.075em 0.075em 0 rgba(34,24,52,.95), 0.075em -0.075em 0 rgba(34,24,52,.95), -0.075em -0.075em 0 rgba(34,24,52,.95), 0 0 .55em rgba(255,226,170,.5), 0 0 1.1em rgba(255,214,150,.3);opacity:0;pointer-events:none;transition:opacity 1.3s ease, transform 1.3s ease}
+  -webkit-text-stroke:5px rgba(34,24,52,.92);paint-order:stroke fill;   /* a thick dark outline, drawn behind the letters, and a soft warm glow round the whole line */
+  text-shadow:0 0 14px rgba(255,226,170,.6), 0 0 30px rgba(255,214,150,.38), 0 2px 5px rgba(10,8,30,.6);opacity:0;pointer-events:none;transition:opacity 1.3s ease, transform 1.3s ease}
 .narrator.show{opacity:1;transform:translate(-50%,0)}
-body.is-paused .narrator{opacity:0}
-@media (max-width:640px){ .narrator{top:calc(104px + env(safe-area-inset-top, 0px));width:calc(100vw - 96px)} }
-@media (max-width:640px){ .narrator{text-shadow:0.07em 0em 0 rgba(34,24,52,.95), -0.07em 0em 0 rgba(34,24,52,.95), 0em 0.07em 0 rgba(34,24,52,.95), 0em -0.07em 0 rgba(34,24,52,.95), 0.05em 0.05em 0 rgba(34,24,52,.95), -0.05em 0.05em 0 rgba(34,24,52,.95), 0.05em -0.05em 0 rgba(34,24,52,.95), -0.05em -0.05em 0 rgba(34,24,52,.95), 0.1em 0em 0 rgba(34,24,52,.95), -0.1em 0em 0 rgba(34,24,52,.95), 0em 0.1em 0 rgba(34,24,52,.95), 0em -0.1em 0 rgba(34,24,52,.95), 0.075em 0.075em 0 rgba(34,24,52,.95), -0.075em 0.075em 0 rgba(34,24,52,.95), 0.075em -0.075em 0 rgba(34,24,52,.95), -0.075em -0.075em 0 rgba(34,24,52,.95), 0 0 .5em rgba(255,226,170,.3)} }   /* on a phone the letters are smaller, so the glow is gentler still */
-@media (prefers-reduced-motion:reduce){ .narrator{transform:translate(-50%,0);transition:opacity .6s} }
+@media (max-width:640px){ .narrator{top:calc(86px + env(safe-area-inset-top, 0px));width:calc(100vw - 40px)} }
+/* phones and tablets only: there the stroke and wide glow wash over the small letters, so the outline is a ring of hard shadows sized to the letters and the glow is gentler */
+@media (max-width:640px),(pointer:coarse){ .narrator{-webkit-text-stroke:0;paint-order:normal;text-shadow:0.07em 0em 0 rgba(34,24,52,.95), -0.07em 0em 0 rgba(34,24,52,.95), 0em 0.07em 0 rgba(34,24,52,.95), 0em -0.07em 0 rgba(34,24,52,.95), 0.05em 0.05em 0 rgba(34,24,52,.95), -0.05em 0.05em 0 rgba(34,24,52,.95), 0.05em -0.05em 0 rgba(34,24,52,.95), -0.05em -0.05em 0 rgba(34,24,52,.95), 0.1em 0em 0 rgba(34,24,52,.95), -0.1em 0em 0 rgba(34,24,52,.95), 0em 0.1em 0 rgba(34,24,52,.95), 0em -0.1em 0 rgba(34,24,52,.95), 0.075em 0.075em 0 rgba(34,24,52,.95), -0.075em 0.075em 0 rgba(34,24,52,.95), 0.075em -0.075em 0 rgba(34,24,52,.95), -0.075em -0.075em 0 rgba(34,24,52,.95), 0 0 .5em rgba(255,226,170,.3)} }
 </style>
 
 <canvas id="scene" aria-label="A treehouse lifted by balloons drifting toward the Moon"></canvas>
@@ -329,9 +345,8 @@ body.is-paused .narrator{opacity:0}
 <div class="controls hud-off" id="controls">
   <button id="againSmall" type="button" hidden>Fly again</button>
   <button id="skipBtn" type="button" hidden>Skip to liftoff</button>
-  <button id="bookBtn" type="button">Fact book 0/27</button>
   <button id="paceBtn" type="button">Pace 1×</button>
-  <button id="soundBtn" type="button" aria-pressed="true">Music on</button>
+  <button id="setBtn" type="button">Settings</button>
 </div>
 
 <section class="splash" id="splash" aria-labelledby="splashTitle">
@@ -353,6 +368,22 @@ body.is-paused .narrator{opacity:0}
     <p class="splash-body">Read the words together as the story drifts along. There&rsquo;s nothing to win and no hurry, and you can pause at any time. Little book tags along the way open real science facts, for older kids and grown-ups alike.</p>
     <button class="splash-go" id="splashBtn" type="button">Open the story</button>
     <p class="splash-note">Best with the sound on</p>
+  </div>
+</section>
+
+<section class="splash howto" id="howto" aria-labelledby="howTitle">
+  <div class="splash-dots" aria-hidden="true"></div>
+  <div class="splash-in">
+    <h1 id="howTitle">How to play</h1>
+    <ul class="how-list">
+      <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff4dc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><circle cx="6" cy="9" r="3"/><circle cx="18" cy="9" r="3"/><path d="M12 11l-1 7M6 12l4 6M18 12l-4 6"/><path d="M8 18h8v3H8z"/></svg><span><strong>The treehouse floats on its own.</strong> Sit back and read the girls&rsquo; words aloud as they appear.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff4dc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V12m0-1a1.5 1.5 0 0 1 3 0v4a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4a1.4 1.4 0 0 1 2.4-1.4L9 14"/></svg><span><strong>Drag to look around,</strong> and pinch or scroll to zoom.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff4dc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7c-2-1.6-5-1.8-8-1v12c3-.8 6-.6 8 1 2-1.6 5-1.8 8-1V6c-3-.8-6-.6-8 1zM12 7v12"/></svg><span><strong>Tap a book tag</strong> to open a real fact. Some only show while a bird, plane or UFO is about, so keep an eye out.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff4dc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3a8 8 0 1 0 6 12A6.5 6.5 0 0 1 15 3z"/></svg><span><strong>On the Moon, stay as long as you like.</strong> Tap Float home for dinner when it&rsquo;s time to go.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff4dc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg><span><strong>Tap the pause button any time.</strong> The book under it holds every fact you&rsquo;ve found, and Settings changes the text size and the music.</span></li>
+    </ul>
+    <button class="splash-go" id="howBtn" type="button">Got it</button>
+    <p class="splash-note">There&rsquo;s nothing to win and no hurry</p>
   </div>
 </section>
 
@@ -396,7 +427,27 @@ body.is-paused .narrator{opacity:0}
   <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="4" width="4.6" height="16" rx="2" fill="currentColor"/><rect x="13.9" y="4" width="4.6" height="16" rx="2" fill="currentColor"/></svg>
   <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4.8v14.4a1.2 1.2 0 0 0 1.8 1l11-7.2a1.2 1.2 0 0 0 0-2l-11-7.2A1.2 1.2 0 0 0 8 4.8z" fill="currentColor"/></svg>
 </button>
-<div class="paused-banner" id="pausedBanner" role="status"><b>Paused</b>Tap a little book to learn something!</div>
+<button class="pause book-btn" id="bookBtn" type="button" aria-label="Open the fact book" hidden>
+  <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 9.5C13 7 8.5 6.6 4.5 7.6v16c4-1 8.500-.6 11.500 1.900 3-2.500 7.500-2.900 11.500-1.900v-16c-4-1-8.500-.6-11.500 1.900z" fill="#fffaf0" stroke="#2a1a33" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 9.500v16" stroke="#2a1a33" stroke-width="1.800" stroke-linecap="round"/><g stroke="#8b7aa8" stroke-width="1.300" stroke-linecap="round" fill="none"><path d="M7.500 12c2-.4 4-.2 5.500.700M7.500 15.500c2-.4 4-.2 5.500.700M7.500 19c2-.4 4-.2 5.500.700"/><path d="M19 12.700c1.500-.9 3.500-1.100 5.500-.7M19 16.200c1.500-.9 3.500-1.100 5.500-.7"/></g><path d="M21.500 4.500v8l1.900-1.500 1.900 1.500v-8z" fill="#e2574c" stroke="#2a1a33" stroke-width="1.200" stroke-linejoin="round"/></svg>
+  <span class="book-n" id="bookN">0</span>
+</button>
+<div class="paused-banner" id="pausedBanner" role="status"><b>Paused</b><span id="pausedTip">Tap a little book to learn something!</span></div>
+
+<div class="book-scrim" id="setScrim" hidden>
+  <div class="zone-card" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <h2 id="setTitle">Settings</h2>
+    <h3>Text size</h3>
+    <div class="zone-row set-size" id="setSize" role="group" aria-label="Text size"><button type="button" data-ts="1">Small</button><button type="button" data-ts="1.15">Medium</button><button type="button" data-ts="1.3">Large</button><button type="button" data-ts="1.5">Extra large</button></div>
+    <p class="set-sample">&ldquo;Fifty balloons, tied tight. Check!&rdquo;</p>
+    <h3>Sound</h3>
+    <div class="zone-row"><button id="soundBtn" type="button" aria-pressed="true">Music on</button></div>
+    <h3>The trip</h3>
+    <div class="zone-row"><button id="backBtn" type="button">Back to the start</button><button id="resetBtn" type="button">Restart progress</button></div>
+    <p>Back to the start leaves the trip and returns to the title page. Restart progress also forgets every fact found and everything the girls remember from earlier trips.</p>
+    <button class="zone-close" id="setClose" type="button" aria-label="Close the settings">✕</button>
+  </div>
+</div>
+
 
 <div class="book-scrim" id="bookScrim" hidden>
   <div class="book" id="book" role="dialog" aria-modal="true" aria-labelledby="bookTitle">
@@ -1376,7 +1427,7 @@ function updateBrain(b,dt){
   g.g.position.set(b.pos.x,b.y+rg.rootY,b.pos.y); g.g.rotation.order='YXZ'; g.g.rotation.y=b.face; g.g.rotation.x=rg.tilt;
   g.upper.position.y=0.3-drop; g.upper.rotation.set(rg.lean,0,rg.side);
   g.legs.forEach((l,i)=>{ l.position.y=0.3-drop; l.scale.y=Math.max(0.05,(0.3-drop)/0.3); l.rotation.x=i?rg.lrx:rg.llx; l.rotation.z=(i?1:-1)*rg.lsp; });
-  g.head.rotation.set(rg.hx,rg.hy,rg.hz);
+  g.head.rotation.set(rg.hx,rg.hy,rg.hz); gazeHead(b,g,b===juneB?0:b===pipB?1:4);
   g.armL.rotation.set(rg.lax,0,rg.laz); g.armR.rotation.set(rg.rax,0,rg.raz);
   g.tails.forEach((t,i)=>{ t.rotation.z=(i?1:-1)*(0.1+Math.sin(time*2.2+i)*0.08)+(walking?Math.sin(b.walkPhase*2)*0.15:0); });
   b.blinkIn-=dt; if(b.blinkIn<0){ b.blink=0.13; b.blinkIn=2.5+Math.random()*3.5; }
@@ -1529,7 +1580,8 @@ function fmtAlt(km){ if(km<1) return Math.round(km*1000)+' m'; if(km<10) return 
 let wakeLock=null;
 async function keepAwake(){ try{ if(navigator.wakeLock) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){} }
 $('beginBtn').addEventListener('click',()=>startPrep());
-$('splashBtn').addEventListener('click',()=>{ const sp=$('splash'); sp.classList.add('gone'); setTimeout(()=>{ sp.hidden=true; $('beginBtn').focus({preventScroll:true}); },1250); });
+$('splashBtn').addEventListener('click',()=>{ const sp=$('splash'); sp.classList.add('gone'); setTimeout(()=>{ sp.hidden=true; $('howBtn').focus({preventScroll:true}); },1250); });
+$('howBtn').addEventListener('click',()=>{ const sp=$('howto'); sp.classList.add('gone'); setTimeout(()=>{ sp.hidden=true; $('beginBtn').focus({preventScroll:true}); },1250); });
 $('skipBtn').addEventListener('click',()=>skipPrep());
 $('soundBtn').addEventListener('click',e=>{ const on=Music.toggle(); e.currentTarget.textContent=on?'Music on':'Music off'; e.currentTarget.setAttribute('aria-pressed',String(on)); });
 const PACES=[1,2,4];
@@ -1555,7 +1607,7 @@ function flyAgain(toStart){
   setTimeout(()=>{ state.p=0; state.landed=false; chapterAt=-1; camTheta=-Math.PI/4; userPhi=0; zoom=1; capEl.classList.remove('show'); f.classList.remove('on');
     hushBubbles(); hushNarrator(); resetEvents(); clearMoonMarks(); landT=0; resetHome(); placeGirls();
     if(toStart===true){ /* back to the opening storybook card */
-      state.started=false; prep=null; mooring.visible=true; idle=0; $('skipBtn').hidden=true; $('pauseBtn').hidden=true;
+      state.started=false; prep=null; mooring.visible=true; idle=0; $('skipBtn').hidden=true; $('pauseBtn').hidden=true; $('bookBtn').hidden=true;
       ['alt','rail','controls'].forEach(id=>$(id).classList.add('hud-off'));
       const intro=$('intro'); intro.hidden=false; requestAnimationFrame(()=>intro.classList.remove('gone')); }
     else BRAINS.forEach(b=>{ b.cur=null; b.queue.push({k:'pose',pose:'wave',dur:13+Math.random()*2,face:0}); }); },950);
@@ -1565,6 +1617,17 @@ $('stayBtn').addEventListener('click',()=>{ hideEnding(); $('homeSmall').hidden=
 $('homeBtn').addEventListener('click',()=>callHome());
 $('homeSmall').addEventListener('click',()=>callHome());
 $('goodnightBtn').addEventListener('click',()=>flyAgain(true));
+/* settings: how big the words are (remembered from one visit to the next), the music, and the way back to the title page */
+const TS_KEY='treehouse-textsize';
+function setTextSize(v,save){ v=[1,1.15,1.3,1.5].includes(+v)?+v:1.15; document.documentElement.style.setProperty('--ts',v); $('setSize').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.ts===v))); if(save){ try{ localStorage.setItem(TS_KEY,String(v)); }catch(e){} } }
+{ let v=1.15; try{ v=localStorage.getItem(TS_KEY)||1.15; }catch(e){} setTextSize(v,false); }
+$('setSize').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) setTextSize(b.dataset.ts,true); });
+let setAuto=false;
+function openSettings(){ if(bookOpen) closeBook(); if(state.started&&!paused){ setAuto=true; setPaused(true); } $('setScrim').hidden=false; $('pausedBanner').classList.remove('show'); setTimeout(()=>{ try{ $('setClose').focus({preventScroll:true}); }catch(e){} },60); }
+function closeSettings(leaving){ if($('setScrim').hidden) return; $('setScrim').hidden=true; if(setAuto){ setAuto=false; if(!leaving) setPaused(false); } else if(!leaving) $('pausedBanner').classList.toggle('show',paused); }
+$('setBtn').addEventListener('click',openSettings); $('setClose').addEventListener('click',()=>closeSettings()); $('setScrim').addEventListener('pointerdown',e=>{ if(e.target===$('setScrim')) closeSettings(); });
+$('backBtn').addEventListener('click',()=>{ closeSettings(true); flyAgain(true); });
+$('resetBtn').addEventListener('click',()=>{ found.length=0; saveFound(); updateBookBtn(); try{ localStorage.removeItem('treehouse-memory'); }catch(e){} if(typeof resetMemory==='function') resetMemory(); const b=$('resetBtn'); b.textContent='Progress restarted'; setTimeout(()=>b.textContent='Restart progress',2200); });
 function onLand(){ narrate('And that is how two sisters came to be standing on the Moon before dinner.'); placeBucket(false); hideMoonProps(); hushBubbles(); speak(['We landed!','On the MOON!'],0); together([{pose:'hop',dur:3},{pose:'wave',dur:3.5}],[-0.65,0.55]);
   BRAINS.forEach((b,i)=>{ const spot=i?[3.6,6.4]:[-2.4,7.0]; b.queue.push(...stepsTo(b.target,'deck',spot),{k:'pose',pose:i?'moonhop':'flag',dur:5.5,face:i?0.4:-0.3}); b.target=spot; }); setTimeout(()=>{ if(!state.landed) return; const en=$('ending'); en.hidden=false; requestAnimationFrame(()=>en.classList.remove('gone')); capEl.classList.remove('show'); },3500); }
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ Music.resume(); if(state.started) keepAwake(); } });
@@ -1621,7 +1684,7 @@ function nextLine(key,src){ const d=decks[key]||(decks[key]=[]); if(!d.length){ 
 /* one bubble at a time: every line waits its turn and stays up long enough to read */
 const lineTime=tx=>1.6+tx.length*0.06;
 function showLine(w,tx){ bubbles.forEach((bb,i)=>{ if(i!==w){ bb.t=0; bb.el.classList.remove('show'); } });
-  const bb=bubbles[w]; bb.el.querySelector('.txt').textContent=tx; bb.t=lineTime(tx); bb.el.classList.add('show'); curLine={w,t:bb.t}; }
+  const bb=bubbles[w]; bb.el.querySelector('.txt').textContent=tx; bb.t=lineTime(tx)*(film.k>0.5?1.35:1); bb.el.classList.add('show'); curLine={w,t:bb.t,tx}; }
 function say(i,text){ script.push([i,text]); }
 function speak(line,i){ if(i===undefined) i=Math.random()<0.5?0:1;
   if(Array.isArray(line)) script.push([i,line[0]],[1-i,line[1]]); else script.push([i,line]); }
@@ -1643,8 +1706,16 @@ function updateSpeech(dt){
   else if(script.length){ const [w,tx]=script.shift(); if(bubbles[w]&&bubbles[w].root.visible) showLine(w,tx); }
   else if(state.started&&!state.home&&!state.callHome&&!state.finale){ speakIn-=dt; if(speakIn<=0){ chatter(); speakIn=(state.landed?5:7)+Math.random()*7; } }
   const xs=[]; let sx=0, n=0;
+  const filmed=film.k>0.6, fkey=film.key+film.id, freshB=filmed&&fkey!==film.bubKey; if(filmed) film.bubKey=fkey;
   bubbles.forEach((bb,i)=>{ bb.head.getWorldPosition(hp); hp.project(camera);
-    const x=(hp.x*0.5+0.5)*innerWidth, y=(-hp.y*0.5+0.5)*innerHeight; xs[i]=x;
+    let x=(hp.x*0.5+0.5)*innerWidth, y=(-hp.y*0.5+0.5)*innerHeight;
+    if(filmed){ /* in a filmed moment a bubble is placed once per line and shot: just over its speaker, or in a bottom corner if she is out of the picture */
+      const A=film.bubAt[i]||(film.bubAt[i]={x,y});
+      if(freshB||!A.set){ const on=hp.z<1&&x>40&&x<innerWidth-40&&y>90&&y<innerHeight-40; A.set=true;
+        if(on){ A.x=x; A.y=Math.max(150,y-0.06*innerHeight); } else { A.x=i%2?innerWidth*0.7:innerWidth*0.3; A.y=innerHeight-60; } }
+      x=A.x; y=A.y; hp.z=0; }
+    else film.bubAt.length=0;
+    xs[i]=x;
     const vis=bb.root.visible&&hp.z<1&&x>-80&&x<innerWidth+80&&y>-40&&y<innerHeight+120;
     if(vis&&bb.t>0){ sx+=x; n++; }
     bb.el.style.transform=`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`; bb.el.style.visibility=vis?'visible':'hidden'; });
@@ -2073,7 +2144,7 @@ const BOOK_ICON='<svg class="bi" viewBox="0 0 24 24" aria-hidden="true"><path d=
 let paused=false, autoPaused=false, bookOpen=false, bookKey=null;
 let found=[]; try{ found=JSON.parse(localStorage.getItem('treehouse-facts')||'[]').filter(k=>FACTS[k]); }catch(e){ found=[]; }
 function saveFound(){ try{ localStorage.setItem('treehouse-facts',JSON.stringify(found)); }catch(e){} }
-function updateBookBtn(){ $('bookBtn').textContent=`Fact book ${found.length}/${FACT_ORDER.length}`; }
+function updateBookBtn(){ $('bookN').textContent=found.length; $('bookBtn').setAttribute('aria-label',`Open the fact book. ${found.length} of ${FACT_ORDER.length} pages found.`); }
 function setPaused(p){
   paused=p; const b=$('pauseBtn'); b.classList.toggle('on',p); b.setAttribute('aria-label',p?'Resume the trip':'Pause the trip'); b.setAttribute('aria-pressed',String(p));
   $('pausedBanner').classList.toggle('show',p&&!bookOpen); document.body.classList.toggle('is-paused',p);
@@ -2135,6 +2206,7 @@ $('bookBtn').addEventListener('click',()=>openContents());
 $('bookPage').addEventListener('click',()=>{ bookMode='toc'; renderBook(true); });
 $('layerChip').addEventListener('click',()=>openFact(chipKey));
 addEventListener('keydown',e=>{
+  if(!$('setScrim').hidden){ if(e.key==='Escape') closeSettings(); return; }
   if(e.key==='Escape'&&bookOpen){ closeBook(); return; }
   if(bookOpen&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){ turnPage(e.key==='ArrowRight'?1:-1); return; }
   if(!state.started) return;
@@ -2219,11 +2291,11 @@ function goPose(b,p,pose,face){ b.cur=null; b.queue.length=0; b.hold=pose; b.tar
 function setPose(b,pose,face){ b.hold=pose; b.cur=null; b.queue.length=0; b.queue.push({k:'pose',pose,dur:1e9,face}); }
 function countdown(txt){ const el=$('countdown'); el.textContent=txt; el.classList.toggle('word',txt.length>2); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
 const PREP=[
-  [0.6, ()=>{ say(0,'Okay, Pip. Final check before liftoff!'); goPose(juneB,[-0.35,1.25],'idle',0.9); goPose(pipB,[0.95,1.35],'idle',-1.3); }],
+  [0.6, ()=>{ say(0,'Okay, Pip. Final check before liftoff!'); goPose(juneB,[-0.35,1.25],'idle',1.4); goPose(pipB,[0.95,1.35],'idle',-1.3); }],
   [3.6, ()=>{ say(1,'Ready, Captain June!'); setPose(pipB,'hop',-1.3); }],
   [6.0, ()=>{ setPose(pipB,'idle',-1.3); say(0,'Balloons?'); setPose(juneB,'look',0.9); }],
   [7.8, ()=>{ say(1,'Fifty balloons, tied tight. Check!'); setPose(pipB,'look',-1.3); }],
-  [10.8,()=>{ setPose(juneB,'idle',0.9); setPose(pipB,'idle',-1.3); say(0,'Snacks for the trip?'); }],
+  [10.8,()=>{ setPose(juneB,'idle',1.4); setPose(pipB,'idle',-1.3); say(0,'Snacks for the trip?'); }],
   [12.0,()=>{ goPose(juneB,[-1.6,1.75],'idle',1.65); }],
   [12.6,()=>{ say(1,'Be right back!'); goPose(pipB,[0.3,-0.85],'inside',0); }],
   [18.0,()=>{ goPose(pipB,[0.95,1.35],'hop',-1.3); }],
@@ -2239,7 +2311,7 @@ const PREP=[
   [45.6,()=>{ countdown('Liftoff!'); beginFlight(); }]
 ];
 function startPrep(){
-  $('pauseBtn').hidden=false; Music.start(); Music.unlock(); keepAwake(); idle=0;
+  $('pauseBtn').hidden=false; $('bookBtn').hidden=false; Music.start(); Music.unlock(); keepAwake(); idle=0;
   const intro=$('intro'); intro.classList.add('gone'); setTimeout(()=>intro.hidden=true,1500);
   ['alt','rail','controls'].forEach(id=>$(id).classList.remove('hud-off'));
   $('skipBtn').hidden=false; prep={t:0,i:0};
@@ -2346,6 +2418,77 @@ LUMI_MOON.push(
 LUMI_TRIP.space.push([[4,'My boulder looks so small now.'],[0,'You can visit it again!']]);
 LUMI_TRIP.sky.push([[4,'Your sky is so busy. Clouds, birds, planes...'],[1,'And lights!']]);
 
+/* ---------- filmed moments ----------
+   The big conversations are filmed rather than watched from the usual orbit: meeting Lumi, getting hungry with her, the hug on the lawn,
+   and the sisters' pre-flight check. The camera eases in from wherever it was, opens on a shot through between the girls, then cuts at
+   each new line: over the girls' shoulders onto whoever is speaking to them, or from behind that person onto the girl who answers.
+   Each cut happens only when a new line starts, and each speech bubble is placed once per line and shot, so nothing chases a head round
+   the screen. Everyone turns their head to look at whoever is talking. (Ported from the meetings in Trail to the Top.) */
+const HEADS=[june.head,pip.head,mom.head,dad.head,lumi.head], HEADSZ=[1.3,1.08,1.72,1.8,1.16];
+const film={k:0,scene:'',sceneT:0,key:'',id:'',p:new THREE.Vector3(),l:new THREE.Vector3(),pos:new THREE.Vector3(),look:new THREE.Vector3(),bubKey:'',bubAt:[],gazeAt:new THREE.Vector3(),gaze:false};
+const _fa=new THREE.Vector3(), _fg=new THREE.Vector3(), _fd=new THREE.Vector3(), _fs=new THREE.Vector3(), _fh=new THREE.Vector3();
+function faceAt(i,out){ HEADS[i].getWorldPosition(out); return out.addScaledVector(up,0.2*HEADSZ[i]); }
+function midOf(list,out){ out.set(0,0,0); list.forEach(i=>{ faceAt(i,_fh); out.add(_fh); }); return out.multiplyScalar(1/list.length); }
+function filmScene(){
+  if(prep&&prep.t>2.2&&prep.t<41&&!(prep.t>12.2&&prep.t<23.4)) return {name:'prep',girls:[0,1],actors:null};
+  const down=juneB.zone==='ground'&&pipB.zone==='ground';
+  if(state.landed&&!state.callHome&&down&&(lumiStage===1||lumiStage===2)) return {name:'lumi',girls:[0,1],actors:[4],hidden:lumiStage===1||(lumiStageT<6&&lumiB.cur&&lumiB.cur.k==='walk')};
+  if(state.landed&&!state.callHome&&down&&lumiStage===4) return {name:'hungry',girls:[0,1],actors:[4]};
+  if(hs&&hs.phase==='hug') return {name:'hug',girls:lumiB.active?[0,1,4]:[0,1],actors:[2,3]};
+  return null; }
+function chooseShot(S){
+  const w=curLine?curLine.w:-1;
+  if(S.name==='prep'){ if(w!==0&&w!==1) return film.id||'two'; return 'ots-'+w; }   /* the sisters: over one girl's shoulder onto the other */
+  if(S.hidden) return 'through';   /* while Lumi is still hiding behind her boulder, the camera stays behind the girls */
+  if(film.sceneT<3.6||w<0) return film.id&&film.sceneT>=3.6?film.id:'through';
+  if(S.actors.includes(w)) return 'ots-girls';
+  return 'ots-actor'; }
+function placeShot(S,id){
+  const w=curLine?curLine.w:-1, P=film.p, L=film.l;
+  if(S.name==='prep'){ const other=id==='ots-0'?1:0, spk=1-other;
+    if(id==='two'){ midOf([0,1],_fg); faceAt(0,_fa); faceAt(1,_fd); _fd.sub(_fa); _fd.addScaledVector(up,-_fd.dot(up)).normalize(); _fs.crossVectors(up,_fd);
+      if(_fs.dot(_fh.set(0,0,1).applyQuaternion(qFrame))<0) _fs.negate(); P.copy(_fg).addScaledVector(_fs,3.1).addScaledVector(up,0.55); L.copy(_fg); return; }
+    faceAt(other,_fg); faceAt(spk,_fa); _fd.subVectors(_fa,_fg); _fd.addScaledVector(up,-_fd.dot(up)).normalize(); _fs.crossVectors(up,_fd);
+    if(_fs.dot(_fh.set(0,0,1).applyQuaternion(qFrame))<0) _fs.negate();   /* always from the porch side, never inside the walls */
+    P.copy(_fg).addScaledVector(_fd,-1.25).addScaledVector(_fs,0.75).addScaledVector(up,0.3); L.copy(_fa); return; }
+  midOf(S.girls,_fg); midOf(S.actors,_fa); _fd.subVectors(_fa,_fg); const dist=Math.max(0.5,_fd.length()-_fd.dot(up)*Math.sign(_fd.dot(up))*0);
+  _fd.addScaledVector(up,-_fd.dot(up)).normalize(); _fs.crossVectors(up,_fd);
+  const tall=S.name==='hug';
+  if(tall){ /* the hug is one tangle of people, so it is filmed from a little way off: from the girls' side while a grown-up talks, and from the grown-ups' side while a girl does */
+    _fh.copy(_fg).lerp(_fa,0.5); const fromGirls=id!=='ots-actor';
+    P.copy(_fh).addScaledVector(_fd,fromGirls?-4.3:4.3).addScaledVector(_fs,fromGirls?1.6:-1.6).addScaledVector(up,1.5); L.copy(_fh).addScaledVector(up,-0.1);
+    if(w>=0) L.lerp(faceAt(w,_fa),0.35); return; }
+  if(id==='through'){ P.copy(_fg).addScaledVector(_fd,-2.4).addScaledVector(_fs,0.35).addScaledVector(up,0.7); L.copy(_fa).lerp(_fg,0.25); }
+  else if(id==='ots-girls'){ const spk=S.actors.includes(w)?faceAt(w,_fh):_fh.copy(_fa); P.copy(_fg).addScaledVector(_fd,-1.7).addScaledVector(_fs,1.15).addScaledVector(up,tall?0.75:0.45); L.copy(spk); }
+  else { const spk=w>=0&&S.girls.includes(w)?faceAt(w,_fh):_fh.copy(_fg);
+    for(const side of [-0.95,0.95]){ P.copy(_fa).addScaledVector(_fd,tall?1.0:1.15).addScaledVector(_fs,side).addScaledVector(up,tall?0.1:0.3); if(!behindBoulder(P)) break; }
+    L.copy(spk); if(tall) L.lerp(_fg,0.35); }
+  if(state.landed&&behindBoulder(P)){ P.copy(_fg).addScaledVector(_fd,-2.4).addScaledVector(up,0.8); L.copy(_fa); }   /* never film from inside Lumi's boulder */
+}
+const _fb=new THREE.Vector3();
+function behindBoulder(P){ if(!state.landed) return false; _fb.copy(P); house.worldToLocal(_fb); return Math.hypot(_fb.x-BOULDER[0],_fb.z-BOULDER[1])<2.6; }
+function updateFilm(dt){
+  const S=filmScene(), on=!!S&&state.started!==undefined;
+  if(S){ if(S.name!==film.scene){ film.scene=S.name; film.sceneT=0; film.id=''; film.key=''; } film.sceneT+=dt; }
+  else { film.scene=''; }
+  film.k=damp(film.k,S?1:0,S?1.1:0.9,dt);
+  if(!S){ film.gaze=false; return; }
+  const key=(curLine?curLine.w+':'+curLine.tx:'-')+'|'+(film.sceneT<3.6?'a':'b');
+  let cut=false;
+  if(key!==film.key){ film.key=key; const id=chooseShot(S); cut=id!==film.id&&film.id!==''; film.id=id; }
+  placeShot(S,film.id);
+  if(film.k<0.02||(cut&&film.k>0.6)){ film.pos.copy(film.p); film.look.copy(film.l); }
+  else { const q=1-Math.exp(-2.6*dt); film.pos.lerp(film.p,q); film.look.lerp(film.l,q); }
+  /* who everyone looks at: the speaker; while nobody speaks, the girls look at whoever they are meeting */
+  const w=curLine?curLine.w:-1; film.gaze=true;
+  if(w>=0) faceAt(w,film.gazeAt); else if(S.actors) midOf(S.actors,film.gazeAt); else midOf(S.girls,film.gazeAt); }
+/* turn a head toward film.gazeAt, on top of whatever pose it is in (called after the pose is applied) */
+const _gl=new THREE.Vector3();
+function gazeHead(b,g,i){ if(b.gz===undefined) b.gz=0; let want=0;
+  if(film.gaze&&film.k>0.3&&g.g.visible){ const w=curLine?curLine.w:-1;
+    if(w!==i){ g.g.updateMatrixWorld(); _gl.copy(film.gazeAt); g.g.worldToLocal(_gl); want=clamp(Math.atan2(_gl.x,_gl.z),-1.0,1.0); } }
+  b.gz=damp(b.gz,want,4,1/60); g.head.rotation.y+=b.gz; }
+
 /* ---------- loop ---------- */
 const up=new THREE.Vector3(), off=new THREE.Vector3(), target=new THREE.Vector3(), qFrame=new THREE.Quaternion(), qSway=new THREE.Quaternion(), eul=new THREE.Euler();
 const railDot=$('railDot'), altValue=$('altValue');
@@ -2432,6 +2575,8 @@ function frame(now){
   if(followK>0.001){ target.lerp(walkerCenter(walkers),followK); sun.target.position.copy(target); sun.position.copy(target).addScaledVector(SUN_DIR,110); }
   camera.position.copy(target).add(off);
   if(u<0.02&&camera.position.y<0.8) camera.position.y=0.8;
+  updateFilm(rawDt*(paused?0:1)||0);
+  if(film.k>0.001){ const fk=film.k*film.k*(3-2*film.k); camera.position.lerp(film.pos,fk); target.lerp(film.look,fk); }
   camera.up.copy(up); camera.lookAt(target);
   sky.position.copy(camera.position);
   starLayers.forEach(s=>s.position.copy(camera.position));
