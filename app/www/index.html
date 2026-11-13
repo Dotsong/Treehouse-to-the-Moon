@@ -453,6 +453,9 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
     <p class="set-sample">&ldquo;Fifty balloons, tied tight. Check!&rdquo;</p>
     <h3>Sound</h3>
     <div class="zone-row"><button id="soundBtn" type="button" aria-pressed="true">Music on</button></div>
+    <h3>Characters</h3>
+    <div class="zone-row set-size" id="setModels" role="group" aria-label="Character models"><button type="button" data-m="detailed">Detailed</button><button type="button" data-m="classic">Classic</button></div>
+    <p id="modelNote" hidden>The change shows the next time the game is opened.</p>
     <h3>The trip</h3>
     <div class="zone-row"><button id="backBtn" type="button">Back to the start</button><button id="resetBtn" type="button">Restart progress</button></div>
     <p>Back to the start leaves the trip and returns to the title page. Restart progress also forgets every fact found and everything the girls remember from earlier trips.</p>
@@ -1005,7 +1008,152 @@ const box=(w,h,d,mat,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d
 
 /* the sisters */
 /* rig: root > legs (hip pivots) + upper (waist pivot) > head (neck pivot) + arms (shoulder pivots) */
-function makeGirl(o){
+/* ---------- the detailed family (from Trail to the Top) ---------- */
+let HI_MODELS=true; try{ HI_MODELS=localStorage.getItem('treehouse-models')!=='classic'; }catch(e){}
+function hiRev(profile,seg,shape){ const rows=profile.length, pos=new Float32Array(rows*seg*3), idx=[];   /* a surface of revolution with no seam */
+  for(let j=0;j<rows;j++){ const r0=profile[j][0], y=profile[j][1], t=j/(rows-1); for(let i=0;i<seg;i++){ const a=i/seg*Math.PI*2, r=shape?shape(a,t,r0,y):r0, k=(j*seg+i)*3; pos[k]=Math.sin(a)*r; pos[k+1]=y; pos[k+2]=Math.cos(a)*r; } }
+  for(let j=0;j<rows-1;j++) for(let i=0;i<seg;i++){ const a=j*seg+i, b=j*seg+(i+1)%seg, c=a+seg, d=b+seg; idx.push(a,b,d,a,d,c); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals(); return g; }
+function hiCurve(pts,n){ return new THREE.SplineCurve(pts.map(p=>new THREE.Vector2(p[0],p[1]))).getPoints(n).map(p=>[Math.max(0,p.x),p.y]); }
+function hiBlob(r,seg,rows,deform){ const prof=[]; for(let j=0;j<=rows;j++){ const a=-Math.PI/2+j/rows*Math.PI; prof.push([Math.cos(a)*r,Math.sin(a)*r]); }
+  const g=hiRev(prof,seg); if(deform){ const p=g.attributes.position, v=new THREE.Vector3(); for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p,i); deform(v); p.setXYZ(i,v.x,v.y,v.z); } g.computeVertexNormals(); } return g; }
+function hiCap(r,len,seg){ const prof=[], n=4; for(let j=0;j<=n;j++){ const a=-Math.PI/2+j/n*Math.PI/2; prof.push([Math.cos(a)*r,Math.sin(a)*r]); } for(let j=0;j<=n;j++){ const a=j/n*Math.PI/2; prof.push([Math.cos(a)*r,len+Math.sin(a)*r]); } return hiRev(prof,seg||8); }
+function hiBox(w,h,d,rad,s){ const g=new THREE.BoxGeometry(w,h,d,s||5,s||5,s||5), p=g.attributes.position, v=new THREE.Vector3(), c=new THREE.Vector3(), hx=w/2-rad, hy=h/2-rad, hz=d/2-rad;
+  for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p,i); c.set(clamp(v.x,-hx,hx),clamp(v.y,-hy,hy),clamp(v.z,-hz,hz)); v.sub(c).normalize().multiplyScalar(rad).add(c); p.setXYZ(i,v.x,v.y,v.z); p.array; }
+  const n=g.attributes.normal; for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p,i); c.set(clamp(v.x,-hx,hx),clamp(v.y,-hy,hy),clamp(v.z,-hz,hz)); v.sub(c).normalize(); n.setXYZ(i,v.x,v.y,v.z); } return g; }
+function hiStar(R,r){ const s=new THREE.Shape(); for(let i=0;i<10;i++){ const a=Math.PI/2+i*Math.PI/5, rr=i%2?r:R; i?s.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):s.moveTo(Math.cos(a)*rr,Math.sin(a)*rr); } s.closePath(); return new THREE.ExtrudeGeometry(s,{depth:0.008,bevelEnabled:false}).translate(0,0,-0.004); }
+function hiM(geo,mat,x,y,z,parent){ const m=new THREE.Mesh(geo,mat); m.position.set(x||0,y||0,z||0); if(parent) parent.add(m); return m; }
+function makeGirlHi(o){
+  const g=new THREE.Group(), skin=L(o.skin), hair=L(o.hair), dressM=L(o.dress), white=L('#fff7ee'), shoeM=L('#3b2a3a'), tights=L(o.legs), ribbon=L(o.ribbon), deep=L(o.skinDeep||o.skin);
+  const hi={knees:[],feet:[],elbows:[],hands:[],bare:[],brows:[]}, sm=(a,b,x)=>{ const t=clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); };
+  /* legs: a thigh, a knee that bends, a shin, and a strapped shoe on an ankle that keeps it flat */
+  const legs=[-1,1].map(s=>{ const piv=new THREE.Group(); piv.position.set(s*0.08,0.31,0); g.add(piv);
+    hiM(hiRev(hiCurve([[0.05,-0.15],[0.047,-0.13],[0.052,-0.06],[0.05,0]],6),14),tights,0,0,0,piv);
+    const knee=new THREE.Group(); knee.position.y=-0.15; piv.add(knee); hiM(hiBlob(0.0498,14,8),tights,0,0,0,knee);
+    hiM(hiRev(hiCurve([[0.04,-0.125],[0.036,-0.11],[0.043,-0.05],[0.05,0]],6),14),tights,0,0,0,knee);
+    hiM(new THREE.TorusGeometry(0.041,0.006,6,18),white,0,-0.095,0,knee).rotation.x=Math.PI/2;
+    const foot=new THREE.Group(); foot.position.y=-0.125; knee.add(foot);
+    hiM(hiBlob(0.062,20,14,v=>{ v.y*=0.62; v.z=v.z*1.55+0.012; v.x*=1.02; if(v.y<-0.02) v.y=-0.02-(-0.02-v.y)*0.35; }),shoeM,0,0,0.03,foot);
+    hiM(hiBlob(0.064,20,6,v=>{ v.y*=0.12; v.z=v.z*1.55+0.012; v.x*=1.04; }),L('#2a1c26'),0,-0.025,0.03,foot);
+    hiM(new THREE.TorusGeometry(0.046,0.008,6,18),shoeM,0,0.02,0.012,foot).rotation.x=Math.PI/2-0.25;
+    hiM(hiBlob(0.009,8,6),L('#f2d27a'),s*0.045,0.023,0.02,foot);
+    hi.knees.push(knee); hi.feet.push(foot); return piv; });
+  const upper=new THREE.Group(); upper.position.y=0.3; g.add(upper);
+  /* the dress: a bell that flares to a hem, in soft pleats that deepen towards the bottom, with a petticoat closing it underneath */
+  const pleat=(a,t,r)=>r*(1+(1-t)*(1-t)*0.055*Math.sin(a*12)+(1-t)*0.012*Math.sin(a*5+1.3));
+  const dress=new THREE.Group(), DY=0.17; dress.position.y=DY; upper.add(dress);   /* (a group, so that a grown-up's can be made slimmer, and things pinned to it) */
+  if(o.shirt){   /* a grown-up's shirt: straight sides, tucked in at a belt, over trousers */
+    hiM(hiRev(hiCurve([[0.16,-0.03],[0.172,0.0],[0.17,0.12],[0.158,0.3],[0.14,0.4],[0.118,0.45],[0.105,0.47]],16),32),dressM,0,-DY,0,dress);
+    hiM(hiBlob(0.165,24,12,v=>{ v.y*=0.42; }),tights,0,-0.03-DY,0,dress); const belt=hiM(new THREE.TorusGeometry(0.162,0.014,6,32),L('#5a4030'),0,-0.02-DY,0,dress); belt.rotation.x=Math.PI/2; hiM(hiBox(0.04,0.034,0.014,0.006,2),L('#f2d27a'),0,-0.02-DY,0.17,dress); }
+  else { const HY=o.long?-0.2:-0.06, prof=o.long?[[0.3,HY],[0.312,HY+0.015],[0.275,-0.04],[0.2,0.2],[0.145,0.36],[0.118,0.44],[0.105,0.47]]:[[0.285,-0.06],[0.3,-0.045],[0.27,0.06],[0.2,0.22],[0.145,0.36],[0.118,0.44],[0.105,0.47]], HR=o.long?0.305:0.293;
+    hiM(hiRev(hiCurve(prof,20),60,pleat),dressM,0,-DY,0,dress);
+    hiM(hiRev(hiCurve([[0.0,HY+0.04],[0.2,HY+0.03],[prof[0][0]-0.002,HY+0.002]],4),60,(a,t,r)=>r*(1+t*0.055*Math.sin(a*12))),L(o.under||'#fff7ee'),0,-DY,0,dress);
+    const hem=new THREE.TorusGeometry(HR,0.009,6,120), p=hem.attributes.position; for(let i=0;i<p.count;i++){ const x=p.getX(i), y=p.getY(i), a=Math.atan2(x,y), k=1+0.055*Math.sin(a*12)+0.012*Math.sin(a*5+1.3); p.setX(i,x*k); p.setY(i,y*k); } hem.computeVertexNormals(); hiM(hem,white,0,HY+0.008-DY,0,dress).rotation.x=Math.PI/2; }
+  if(o.slim) dress.scale.set(o.slim,1,o.slim);
+  const pockM=L(o.pocket||o.dress);
+  if(o.sash){ const sash=hiM(new THREE.TorusGeometry(0.153,0.011,6,40),ribbon,0,0.335,0,upper); sash.rotation.x=Math.PI/2; sash.scale.z=2.2; const bow=new THREE.Group(); upper.add(bow); hi.bow=bow;   /* June's sash, tied in a bow behind */
+    [-1,1].forEach(s=>{ hiM(hiBlob(0.05,12,8,v=>{ v.z*=0.35; v.x*=1.25; }),ribbon,s*0.055,0.345,-0.165,bow).rotation.z=s*0.35; hiM(hiBlob(0.03,10,8,v=>{ v.z*=0.3; v.y*=2.6; }),ribbon,s*0.035,0.255,-0.19,bow).rotation.set(0.25,0,s*-0.25); });
+    hiM(hiBlob(0.024,10,6),ribbon,0,0.34,-0.172,bow); }
+  else if(!o.plain){ hiM(hiBox(0.085,0.08,0.02,0.009,3),pockM,0.1,0.13,0.228,upper).rotation.set(-0.36,0.42,0.05);                                                       /* Pip's snack pocket, with one of the nine peeking out */
+    hiM(hiBox(0.035,0.07,0.012,0.005,2),L('#f2c230'),0.105,0.17,0.222,upper).rotation.set(-0.36,0.42,0.3); hiM(hiBox(0.036,0.02,0.013,0.005,2),L('#c44f3f'),0.105,0.17,0.2225,upper).rotation.set(-0.36,0.42,0.3); }
+  [0.4,0.33,0.26].forEach(y=>hiM(hiBlob(0.011,8,6,v=>{ v.z*=0.55; }),white,0,y,(o.shirt?0.142:0.105)+(0.4-y)*(o.shirt?0.1:0.33),upper));
+  if(o.stars){ const sm=new THREE.MeshBasicMaterial({color:0xfff3a3}), sg=hiStar(0.026,0.011);   /* a scatter of little stars on the skirt, and a crescent moon at her collar */
+    for(let i=0;i<9;i++){ const a=i/9*Math.PI*2+0.3, y=[0.0,0.07,0.14][i%3], r=[0.3,0.285,0.255][i%3]+0.012; const st=hiM(sg,sm,Math.sin(a)*(r+0.01),y,Math.cos(a)*(r+0.01),upper); st.lookAt(st.position.x*3,st.position.y+0.3,st.position.z*3); st.rotateZ(i); }
+    const cr=hiM(new THREE.TorusGeometry(0.03,0.009,6,20,Math.PI*1.25),sm,0,0.43,0.115,upper); cr.rotation.z=-0.6; }
+  [-1,1].forEach(s=>{ hiM(hiBlob(0.085,16,10,v=>{ v.y*=0.16; v.z*=0.95; v.y-=0.035*(v.x*v.x+v.z*v.z)/0.0072; }),white,s*0.062,0.478,0.012,upper).rotation.y=s*0.2; });   /* a Peter Pan collar */
+  hiM(hiRev(hiCurve([[0.085,0.45],[0.075,0.5],[0.07,0.53]],3),14),skin,0,0,0,upper);
+  if(!o.shirt&&!o.slim) [-1,1].forEach(s=>{ const pk=new THREE.Group(); pk.position.set(s*0.228,0.125,0.012); pk.rotation.y=s*Math.PI/2; upper.add(pk); const tilt=new THREE.Group(); tilt.rotation.x=-0.42; pk.add(tilt);   /* a pocket at each hip */
+    hiM(hiBlob(0.074,16,10,v=>{ v.z*=0.3; v.y*=1.2; if(v.y>0.03) v.y=0.03+(v.y-0.03)*0.2; v.y-=0.012; }),pockM,0,0,0.008,tilt);
+    const welt=hiM(new THREE.TorusGeometry(0.058,0.008,6,16,Math.PI),white,0,0.03,0.014,tilt); welt.rotation.x=Math.PI/2+0.25; welt.scale.set(1.05,0.5,1); });
+  /* arms: a puffed sleeve, an upper arm, an elbow, a forearm, and a hand with a thumb and four fingers side by side */
+  const arms=[-1,1].map(s=>{ const piv=new THREE.Group(); piv.position.set(s*0.125,0.435,0); upper.add(piv);
+    hiM(hiBlob(0.062,16,10,v=>{ v.y*=0.92; const a=Math.atan2(v.x,v.z), k=1+0.04*Math.sin(a*9); v.x*=k; v.z*=k; }),dressM,0,-0.03,0,piv);
+    hiM(new THREE.TorusGeometry(0.04,0.008,6,16),white,0,-0.082,0,piv).rotation.x=Math.PI/2;
+    hiM(hiRev(hiCurve([[0.0315,-0.19],[0.033,-0.14],[0.036,-0.08]],3),12),skin,0,0,0,piv);
+    const elbow=new THREE.Group(); elbow.position.y=-0.19; piv.add(elbow); hiM(hiBlob(0.0318,12,8),skin,0,0,0,elbow);
+    hiM(hiRev(hiCurve([[0.026,-0.11],[0.029,-0.06],[0.0315,0]],3),12),skin,0,0,0,elbow);
+    const hand=new THREE.Group(); hand.position.y=-0.135; elbow.add(hand); const bare=new THREE.Group(); hand.add(bare);
+    hiM(hiBlob(0.04,14,10,v=>{ v.x*=0.6; v.z*=0.92; }),skin,0,0,0,bare);
+    for(let f=0;f<4;f++){ const fg=hiM(hiCap(0.0098,0.031,8),skin,0,-0.028,(f-1.5)*0.0165,bare); fg.rotation.x=Math.PI; fg.rotation.z=s*0.12; }
+    hiM(hiCap(0.012,0.022,8),skin,s*-0.012,-0.006,0.036,bare).rotation.x=Math.PI-0.9;
+    hi.elbows.push(elbow); hi.hands.push(hand); hi.bare.push(bare); return piv; });
+  /* the head: fuller cheeks, a soft chin, ears, a button nose */
+  const head=new THREE.Group(); head.position.y=0.5; upper.add(head);
+  hiM(hiBlob(0.2,40,28,v=>{ const low=sm(0.02,-0.16,v.y), front=sm(0,0.2,v.z); v.x*=1+0.07*low*(0.4+0.6*front); v.y*=v.y<0?0.94:1; v.z*=1-0.035*front; if(v.z>0) v.y-=0.012*low*front; }),skin,0,0.17,0,head);
+  [-1,1].forEach(s=>{ hiM(hiBlob(0.034,10,8,v=>{ v.x*=0.45; v.y*=1.15; }),skin,s*0.2,0.16,0,head); hiM(hiBlob(0.018,8,6,v=>{ v.x*=0.4; }),deep,s*0.205,0.158,0.004,head); });
+  hiM(hiBlob(0.016,10,8,v=>{ v.z*=0.75; v.y*=0.8; v.x*=1.15; }),skin,0,0.14,0.192,head);
+  const eyeM=new THREE.MeshBasicMaterial({color:0x2a1c26}), glint=new THREE.MeshBasicMaterial({color:0xffffff}), cheekM=new THREE.MeshBasicMaterial({color:0xff9ea0,transparent:true,opacity:0.7});
+  const eyes=[-1,1].map(s=>{ const e=hiM(hiBlob(0.024,14,10,v=>{ v.y*=1.25; v.z*=0.55; }),eyeM,s*0.072,0.182,0.183,head); e.rotation.y=s*0.36;
+    hiM(hiBlob(0.007,6,5),glint,0.008-s*0.004,0.011,0.012,e);                                    /* the catch-light rides on the eye, so it closes with a blink */
+    const brow=hiM(hiCap(0.0055,0.034,6),hair,s*0.064,0.238,0.178,head); brow.rotation.z=Math.PI/2-s*0.1; brow.rotation.y=s*0.3; hi.brows.push(brow);
+    hiM(hiBlob(0.034,12,6,v=>{ v.z*=0.18; }),cheekM,s*0.118,0.118,0.158,head).rotation.y=s*0.62; return e; });
+  const smile=hiM(new THREE.TorusGeometry(0.03,0.0045,5,16,Math.PI*0.62),L('#a8454f'),0,0.107,0.187,head); smile.rotation.z=Math.PI+Math.PI*0.19; smile.rotation.x=-0.12;
+  const oh=hiM(hiBlob(0.017,12,8,v=>{ v.z*=0.35; v.y*=1.2; }),L('#7a2f3a'),0,0.1,0.186,head); oh.visible=false; hi.smile=smile; hi.oh=oh;   /* the mouth she talks with */
+  if(o.freckles) [[-0.1,0.14],[-0.085,0.128],[-0.115,0.126],[0.1,0.14],[0.085,0.128],[0.115,0.126],[-0.012,0.152],[0.014,0.15]].forEach(([x,y])=>{ const z=Math.sqrt(Math.max(0,0.04-x*x-(y-0.17)*(y-0.17)))*0.968; hiM(hiBlob(0.0042,5,4,v=>{ v.z*=0.3; }),deep,x*1.04,y,z,head); });
+  /* hair: a combed cap, a fuller back, and a fringe of soft locks */
+  const capProf=[]; for(let j=0;j<=14;j++){ const a=Math.PI/2-j/14*Math.PI*0.47; capProf.push([Math.cos(a)*0.216,Math.sin(a)*0.216]); } capProf.reverse();
+  hiM(hiRev(capProf,68,(a,t,r)=>r*(1+0.012*Math.sin(a*34)*(1-t*0.6)+0.006*Math.sin(a*13+2)+(1-t)*0.012*Math.sin(a*8))),hair,0,0.18,-0.015,head).rotation.x=-0.35;
+  const back=hiM(hiBlob(0.2,60,22,v=>{ const a=Math.atan2(v.x,v.z), k=1+0.012*Math.sin(a*30)+0.006*Math.sin(a*69+1); v.x*=k*1.03; v.z*=k*0.72; v.y*=1.1; }),hair,0,0.12,-0.07,head);
+  (o.fringe||[]).forEach(([x,rot,len])=>{ hiM(hiBlob(0.05,10,8,v=>{ v.y*=len; v.z*=0.3; v.x*=0.62; v.z-=v.y*v.y*1.6; }),hair,x,0.268,0.176-Math.abs(x)*0.36,head).rotation.set(0.42,x*2.4,rot); });
+  const tails=[], topknot=[];
+  if(o.style==='pigtails'){ [-1,1].forEach(s=>{ const tp=new THREE.Group(); tp.position.set(s*0.2,0.2,-0.03); head.add(tp);
+      hiM(hiRev(hiCurve([[0.0,-0.3],[0.03,-0.27],[0.07,-0.19],[0.082,-0.11],[0.06,-0.035],[0.03,0.0]],14),27,(a,t,r,y)=>r*(1+0.07*Math.sin(a*9+y*22))),hair,s*0.03,-0.01,-0.005,tp).rotation.z=s*0.22;
+      [-1,1].forEach(b=>{ hiM(hiBlob(0.04,10,8,v=>{ v.z*=0.4; v.x*=1.3; v.y*=0.8; }),ribbon,s*0.015+b*0.036,0.006,0.012,tp).rotation.z=b*0.5; hiM(hiBlob(0.016,8,6,v=>{ v.y*=2.8; v.z*=0.35; }),ribbon,s*0.015+b*0.018,-0.04,0.018,tp).rotation.z=b*0.3; });
+      hiM(hiBlob(0.019,8,6),ribbon,s*0.015,0.004,0.02,tp); tails.push(tp); }); }
+  else if(o.style==='mom'){   /* long hair, brushed back and down past her shoulders, with a clip at one side */
+    hiM(hiBlob(0.21,48,20,v=>{ const a=Math.atan2(v.x,v.z), k=1+0.014*Math.sin(a*26)+0.006*Math.sin(a*57+1); v.x*=k*1.1; v.z*=k*0.78; v.y*=1.8; }),hair,0,0,-0.1,head);
+    hiM(hiBox(0.07,0.028,0.02,0.01,3),ribbon,0.17,0.3,0.03,head).rotation.set(0,0.9,0.5); }
+  else if(o.style==='dad'){ back.scale.set(1,0.64,0.86); back.position.set(0,0.215,-0.075);   /* cut short at the back; round glasses */
+    const gm=new THREE.MeshBasicMaterial({color:0x2e2433}); [-1,1].forEach(s=>{ hiM(new THREE.TorusGeometry(0.052,0.008,6,24),gm,s*0.074,0.182,0.198,head).rotation.y=s*0.3; hiM(hiCap(0.005,0.11,6),gm,s*0.125,0.186,0.185,head).rotation.set(-Math.PI/2+0.05,0,s*-0.5); });
+    hiM(hiCap(0.006,0.04,6),gm,-0.02,0.19,0.212,head).rotation.z=-Math.PI/2; }
+  else if(o.style==='lumi'){   /* Lumi: moonlight-white hair falling to her shoulders, two little buns up top, each pinned with a glowing star */
+    hiM(hiBlob(0.205,48,20,v=>{ const a=Math.atan2(v.x,v.z), k=1+0.016*Math.sin(a*22)+0.008*Math.sin(a*47+1); v.x*=k*1.08; v.z*=k*0.76; v.y*=1.35; if(v.y<-0.12) v.x*=1+(-0.12-v.y)*1.4; }),hair,0,0.06,-0.095,head);
+    const starM=new THREE.MeshBasicMaterial({color:0xfff3a3}), st=hiStar(0.042,0.018);
+    [-1,1].forEach(s=>{ const bn=new THREE.Group(); bn.position.set(s*0.13,0.35,-0.04); head.add(bn);
+      hiM(hiBlob(0.072,24,16,v=>{ const a=Math.atan2(v.x,v.z), k=1+0.05*Math.sin(a*3+v.y*60); v.x*=k; v.z*=k; }),hair,0,0,0,bn);
+      const sp=hiM(st,starM,s*0.03,0.03,0.06,bn); sp.rotation.set(-0.3,s*0.5,s*0.3); topknot.push(bn); }); }
+  else { const bunG=new THREE.Group(); bunG.position.set(0,0.36,-0.115); head.add(bunG);
+    hiM(hiBlob(0.112,36,22,v=>{ const a=Math.atan2(v.x,v.z), k=1+0.035*Math.sin(a*3+v.y*46); v.x*=k; v.z*=k; v.y*=0.94; }),hair,0,0,0,bunG);
+    const sc=new THREE.TorusGeometry(0.082,0.026,8,64), p=sc.attributes.position; for(let i=0;i<p.count;i++){ const x=p.getX(i), y=p.getY(i), z=p.getZ(i), a=Math.atan2(y,x), k=1+0.07*Math.sin(a*16); p.setXYZ(i,x*k,y*k,z*(1+0.3*Math.sin(a*16+1.2))); } sc.computeVertexNormals();
+    hiM(sc,ribbon,0,-0.065,0.022,bunG).rotation.x=Math.PI/2-0.38; hiM(hiBlob(0.02,8,8,v=>{ v.y*=2.6; v.z*=0.5; v.x+=v.y*v.y*4; }),hair,0.05,0.1,0,bunG).rotation.z=-0.5; topknot.push(bunG); }
+  g.scale.setScalar(o.scale);
+  return {g,legs,upper,head,eyes,tails,topknot,dress,armL:arms[0],armR:arms[1],scale:o.scale,hi};
+}
+/* What the simple rig cannot do, the detailed one does for itself, from the same numbers: knees fold instead of legs shrinking, elbows give a
+   little, the shoes stay flat, and the mouth moves when she is the one speaking. */
+function hiRig(g,b,rg,drop,walking,dt){ const H=g.hi, A=0.15, B=0.125;
+  g.legs.forEach((l,i)=>{ const sw=i?rg.lrx:rg.llx, d=clamp(0.275-drop,0.09,0.2749), bend=Math.PI-Math.acos(clamp((A*A+B*B-d*d)/(2*A*B),-1,1)), off=Math.acos(clamp((A*A+d*d-B*B)/(2*A*d),-1,1));
+    let kn=bend+(walking?0.75*Math.max(0,sw):0)+clamp((-sw-0.5)*1.6,0,0.8)*(drop<0.02&&!walking?1:0);   /* a heel lifts behind as she walks; a sitting leg hangs from the knee */
+    l.scale.y=1; l.position.y=0.31-drop; l.rotation.x=sw-off; const K=H.knees[i]; K.rotation.x=kn; H.feet[i].rotation.x=-(l.rotation.x+kn)*(drop>0.02?1:0.55); });
+  [g.armL,g.armR].forEach((a,i)=>{ const ax=a.rotation.x, az=Math.abs(a.rotation.z), torch=b.torch&&(b.hand>0)===(i===1);
+    if(az<0.5) a.rotation.z+=(i?1:-1)*0.13;   /* hanging arms sit a little out from the skirt */
+    const want=torch?0:-(0.16+0.5*clamp(-ax/2.2,0,1)+(walking?0.2*Math.max(0,-ax):0)); const E=H.elbows[i]; E.rotation.x=damp(E.rotation.x,want,10,dt); });
+  const say=curLine&&curLine.w===(g===june?0:g===pip?1:g===lumi?4:-1); H.oh.visible=!!say; H.smile.visible=!say; if(say) H.oh.scale.set(0.95,0.3+0.75*Math.abs(Math.sin(time*10.5)*Math.sin(time*3.7+1)),1);
+}
+/* Spaghetti, modelled: real strands looping over a low heap, sauce ladled on top, meatballs, cheese and a sprig of basil; on a plate
+   with a red line round its rim, or (big) in the serving bowl with its two painted bands and a wooden fork. */
+function hiSpaghetti(big){ const G=new THREE.Group(); let sd=big?31:7; const R=()=>(sd=(sd*16807)%2147483647)/2147483647;
+  const lathe=(pts,seg)=>new THREE.LatheGeometry(new THREE.SplineCurve(pts.map(p=>new THREE.Vector2(p[0],p[1]))).getPoints(20),seg||40);
+  const lump=(r,seg,rows,f)=>{ const g=new THREE.SphereGeometry(r,seg,rows), p=g.attributes.position, v=new THREE.Vector3(); for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p,i); f(v); p.setXYZ(i,v.x,v.y,v.z); } g.computeVertexNormals(); return g; };
+  const china=L(big?'#fffaf0':'#fff6ec',{side:THREE.DoubleSide}), pasta=L('#f3cf7a'), pasta2=L('#eebf62'), red=L('#c8402f'), meat=L('#7a4630');
+  const rad=big?0.2:0.125, high=big?0.105:0.055, y0=big?0.07:0.014, n=big?40:16, thick=big?0.0085:0.0075, dome=r=>high*Math.max(0,1-(r/rad)*(r/rad)), top=r=>dome(r)*1.2+(big?0.022:0.016);
+  if(big){ hiM(lathe([[0,0.022],[0.1,0.024],[0.19,0.05],[0.25,0.11],[0.275,0.17],[0.283,0.176],[0.29,0.17],[0.268,0.1],[0.2,0.03],[0.12,0.006],[0.1,0],[0,0]]),china,0,0,0,G);
+    [[0.150,0.2835,'#e8a03a'],[0.162,0.2885,'#d9534a']].forEach(([y,r,c])=>{ hiM(new THREE.TorusGeometry(r,0.0034,5,48),L(c),0,y,0,G).rotation.x=Math.PI/2; }); }
+  else { hiM(lathe([[0,0.012],[0.1,0.012],[0.145,0.016],[0.185,0.03],[0.215,0.036],[0.222,0.031],[0.2,0.02],[0.14,0.004],[0.09,0],[0,0]]),china,0,0,0,G); hiM(new THREE.TorusGeometry(0.203,0.0036,5,48),L('#d9534a'),0,0.0345,0,G).rotation.x=Math.PI/2; }
+  hiM(lump(rad*0.9,20,10,v=>{ const r=Math.hypot(v.x,v.z); v.y=v.y>0?dome(r/0.9)*0.86:v.y*0.05; }),pasta2,0,y0,0,G);
+  for(let k=0;k<n;k++){ const pts=[], turns=1.2+R()*2.2, a0=R()*6.283, r0=rad*(0.25+R()*0.6), wob=2+((R()*4)|0), ph=R()*6.283, lift=R(), stray=R()<0.12, len=22+((R()*14)|0), dir=R()<0.5?1:-1;
+    for(let i=0;i<=len;i++){ const u=i/len, a=a0+dir*u*turns*6.283, r=clamp(r0*(0.75+0.45*Math.sin(u*wob*6.283+ph))+(stray?rad*0.22*Math.sin(u*3.1):0),rad*0.04,rad*(stray?1.08:0.96));
+      pts.push(new THREE.Vector3(Math.sin(a)*r,y0+dome(Math.min(r,rad))*(0.82+0.3*lift)+thick*(0.6+1.8*lift)+thick*1.2*Math.sin(u*wob*9+ph*2),Math.cos(a)*r)); }
+    hiM(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),len*2,thick,5,false),k%3?pasta:pasta2,0,0,0,G); }
+  const sr=big?0.125:0.075; hiM(lump(sr,24,12,v=>{ const a=Math.atan2(v.x,v.z), r=Math.hypot(v.x,v.z)/sr, k=1+0.1*Math.sin(a*5+1)+0.06*Math.sin(a*9+2.2); v.x*=k; v.z*=k; const rr=Math.hypot(v.x,v.z); v.y=v.y>0?top(rr)+sr*0.16*(1-r*r):top(rr)-0.004; }),red,0,y0,0,G);
+  (big?[[0.06,0.03,0.026],[-0.055,0.035,0.027],[-0.01,-0.06,0.025],[0.075,-0.05,0.024],[-0.085,-0.04,0.024],[0.005,0.09,0.025]]:[[0.035,0.02,0.021],[-0.03,-0.012,0.023],[0,0.045,0.019]]).forEach(([x,z,r])=>{ const y=y0+top(Math.hypot(x,z))+(big?0.03:0.02);
+    hiM(new THREE.SphereGeometry(r,12,9),meat,x,y,z,G); hiM(lump(r*0.82,10,6,v=>{ const a=Math.atan2(v.x,v.z), k=1+0.2*Math.sin(a*4+x*20); v.x*=k; v.z*=k; v.y=v.y>0?v.y*0.42:v.y*0.02; }),red,x,y+r*0.72,z,G); });
+  { const cg=new THREE.BoxGeometry(0.008,0.003,0.018), cm=L('#fff3d0'), cr=big?0.15:0.085; for(let i=0;i<(big?40:18);i++){ const a=R()*6.283, r=cr*Math.sqrt(R()), c=hiM(cg,cm,Math.sin(a)*r,y0+top(r)+(big?0.022:0.014),Math.cos(a)*r,G); c.rotation.set(R()*0.6,R()*6.283,R()*0.6); } }
+  { const lf=new THREE.Group(), sc=big?0.85:0.55; lf.position.set(big?0:-0.012,y0+top(0.02)+(big?0.05:0.036),big?0:-0.03); lf.rotation.set(-0.25,big?1.1:0.6,0.1); lf.scale.setScalar(sc); G.add(lf);
+    [-0.55,0.5].forEach((a,i)=>{ const m=hiM(lump(0.05,10,6,v=>{ v.x*=0.62; v.y=-v.x*v.x*4+v.z*v.z*1.2; v.z*=1.25; v.x*=1-0.5*Math.max(0,v.z/0.06); }),L(i?'#4f9a4a':'#3f8a42',{side:THREE.DoubleSide}),Math.sin(a)*0.045,i*0.004,Math.cos(a)*0.045,lf); m.rotation.y=a; }); }
+  if(big){ const wood=L('#b98a5a'), fk=new THREE.Group(); fk.position.set(0.17,0.2,0.1); fk.rotation.set(0.35,-0.9,-0.95); G.add(fk); hiM(new THREE.CylinderGeometry(0.008,0.011,0.3,8),wood,0,0.12,0,fk); hiM(lump(0.034,10,6,v=>{ v.z*=0.35; v.y*=1.5; }),wood,0,-0.07,0,fk); }
+  G.traverse(o=>{ if(o.isMesh) o.castShadow=true; }); return G; }
+function makeGirl(o){ if(o.hi&&HI_MODELS) return makeGirlHi(o);
   const g=new THREE.Group(), skin=L(o.skin), hair=L(o.hair);
   const legs=[-0.08,0.08].map(x=>{const piv=new THREE.Group();piv.position.set(x,0.3,0);
     const l=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,0.3,6),L(o.legs));l.position.y=-0.15;piv.add(l);
@@ -1037,21 +1185,27 @@ function makeGirl(o){
   g.scale.setScalar(o.scale);
   return {g,legs,upper,head,eyes,tails,dress,armL:arms[0],armR:arms[1],scale:o.scale};
 }
-const june=makeGirl({dress:'#ff8a7a',hair:'#4a2e22',skin:'#f2c7a5',legs:'#fff3e8',ribbon:'#fff3a3',style:'pigtails',scale:1.3});
-const pip=makeGirl({dress:'#b79cff',hair:'#d9783c',skin:'#c99372',legs:'#ffe1ea',ribbon:'#9fd8ff',style:'bun',scale:1.08});
+const june=makeGirl({dress:'#ff8a7a',hair:'#4a2e22',skin:'#f2c7a5',legs:'#fff3e8',ribbon:'#fff3a3',style:'pigtails',scale:1.3,hi:true,under:'#ffd9cf',skinDeep:'#d9a383',pocket:'#f0705f',sash:true,
+  fringe:[[-0.105,0.5,1.25],[-0.055,0.22,1.45],[0,0,1.3],[0.055,-0.22,1.45],[0.105,-0.5,1.25]]});
+const pip=makeGirl({dress:'#b79cff',hair:'#d9783c',skin:'#c99372',legs:'#ffe1ea',ribbon:'#9fd8ff',style:'bun',scale:1.08,hi:true,under:'#e3d9ff',skinDeep:'#a87355',pocket:'#9c82e6',freckles:true,
+  fringe:[[-0.11,0.6,1.1],[-0.06,0.45,1.3],[-0.005,0.3,1.2],[0.06,-0.5,1.15],[0.11,-0.65,1.05]]});
 house.add(june.g,pip.g);
-const lumi=makeGirl({dress:'#c9d2f0',hair:'#f6f3ff',skin:'#e6e2f5',legs:'#f3efff',ribbon:'#fff3a3',style:'bun',scale:1.16});
-{ const aura=new THREE.Sprite(new THREE.SpriteMaterial({map:spriteTex,color:0xdfe6ff,transparent:true,opacity:0.45,depthWrite:false,blending:THREE.AdditiveBlending}));
+const lumi=makeGirl({dress:'#8f9be6',hair:'#ece6ff',skin:'#e9e3f7',legs:'#e3e6ff',ribbon:'#fff3a3',style:HI_MODELS?'lumi':'bun',scale:1.16,hi:true,under:'#d9ddff',skinDeep:'#c4bde0',pocket:'#7c88d8',plain:true,stars:true,
+  fringe:[[-0.11,0.55,1.2],[-0.055,0.3,1.4],[0.005,0.05,1.3],[0.06,-0.3,1.4],[0.112,-0.55,1.2]]});
+{ const aura=new THREE.Sprite(new THREE.SpriteMaterial({map:spriteTex,color:0xdfe6ff,transparent:true,opacity:lumi.hi?0.22:0.45,depthWrite:false,blending:THREE.AdditiveBlending}));
   aura.scale.setScalar(0.95); aura.position.y=0.16; lumi.head.add(aura);
-  const clip=new THREE.Mesh(new THREE.SphereGeometry(0.045,8,6),new THREE.MeshBasicMaterial({color:0xfff3a3})); clip.position.set(0.17,0.3,0.05); lumi.head.add(clip); }
+  if(!lumi.hi){ const clip=new THREE.Mesh(new THREE.SphereGeometry(0.045,8,6),new THREE.MeshBasicMaterial({color:0xfff3a3})); clip.position.set(0.17,0.3,0.05); lumi.head.add(clip); } }
 lumi.g.visible=false; house.add(lumi.g);
 /* Mom and Dad, who wait on the lawn for the trip home */
-function makeAdult(o){ const a=makeGirl(o); a.legs.forEach(l=>{l.scale.y=1.9;l.position.y=0.57;}); a.upper.position.y=0.57;
+function makeAdult(o){ const a=makeGirl(o);
+  if(a.hi){   /* longer legs, made by stretching the thigh and the shin and moving the knee and the foot down to suit, so the shoes keep their shape */
+    a.legs.forEach((l,i)=>{ const K=a.hi.knees[i], F=a.hi.feet[i]; l.position.y=0.57; l.children[0].scale.y=1.9; K.position.y=-0.285; K.children[1].scale.y=1.9; K.children[2].position.y*=1.9; F.position.y=-0.2375; F.scale.setScalar(1.12); });
+    a.upper.position.y=0.57; [a.armL,a.armR].forEach((arm,i)=>{ arm.rotation.z=(i?1:-1)*0.14; a.hi.elbows[i].rotation.x=-0.25; }); return a; } a.legs.forEach(l=>{l.scale.y=1.9;l.position.y=0.57;}); a.upper.position.y=0.57;
   a.dress.scale.set(o.slim||1,1.2,o.slim||1); a.dress.position.y=0.17; return a; }
-const mom=makeAdult({dress:'#e58fa6',hair:'#4a2e22',skin:'#f2c7a5',legs:'#f6e7dc',ribbon:'#fff3a3',style:'mom',scale:1.72});
-const dad=makeAdult({dress:'#6f8fd0',hair:'#d9783c',skin:'#c99372',legs:'#3b3550',ribbon:'#ffffff',style:'dad',scale:1.8,slim:0.8});
-const lanternGlow=new THREE.Mesh(new THREE.SphereGeometry(0.085,10,8),new THREE.MeshBasicMaterial({color:0xffd27a})); lanternGlow.position.y=-0.4; dad.armL.add(lanternGlow);
-const lanternLight=new THREE.PointLight(0xffc070,0,14,2); lanternLight.position.y=-0.4; dad.armL.add(lanternLight);
+const mom=makeAdult({hi:true,plain:true,long:true,under:'#f7d3dc',skinDeep:'#d9a383',pocket:'#d67893',fringe:[[-0.1,0.55,1.3],[-0.045,0.4,1.5],[0.02,0.3,1.45],[0.085,-0.6,1.2]],dress:'#e58fa6',hair:'#4a2e22',skin:'#f2c7a5',legs:'#f6e7dc',ribbon:'#fff3a3',style:'mom',scale:1.72});
+const dad=makeAdult({hi:true,plain:true,shirt:true,skinDeep:'#a87355',fringe:[[-0.09,0.5,0.9],[-0.03,0.3,1.0],[0.03,-0.2,1.0],[0.09,-0.5,0.9]],dress:'#6f8fd0',hair:'#d9783c',skin:'#c99372',legs:'#3b3550',ribbon:'#ffffff',style:'dad',scale:1.8,slim:0.8});
+const lanternGlow=new THREE.Mesh(new THREE.SphereGeometry(0.085,10,8),new THREE.MeshBasicMaterial({color:0xffd27a})); lanternGlow.position.y=dad.hi?-0.08:-0.4; (dad.hi?dad.hi.hands[0]:dad.armL).add(lanternGlow);
+const lanternLight=new THREE.PointLight(0xffc070,0,14,2); lanternLight.position.y=dad.hi?-0.08:-0.4; (dad.hi?dad.hi.hands[0]:dad.armL).add(lanternLight);
 scene.add(mom.g,dad.g);
 const porchLight=new THREE.PointLight(0xffc887,0,24,2); porchLight.position.set(-24.6,3.2,-14.4); scene.add(porchLight);
 
@@ -1201,7 +1355,7 @@ function resetMoonFun(){
   if(typeof resetHops==='function') resetHops();
   if(typeof resetMoonExtras==='function') resetMoonExtras();
 }
-ALL.forEach(b=>{ b.holding=null; b.handRock=new THREE.Mesh(new THREE.DodecahedronGeometry(0.1,0),dustM); b.handRock.position.y=-0.38; b.handRock.visible=false; b.girl.armR.add(b.handRock); });
+ALL.forEach(b=>{ b.holding=null; b.handRock=new THREE.Mesh(new THREE.DodecahedronGeometry(0.1,0),dustM); b.handRock.position.y=b.girl.hi?-0.07:-0.38; b.handRock.visible=false; (b.girl.hi?b.girl.hi.hands[1]:b.girl.armR).add(b.handRock); });
 /* moon hopscotch: the squares are drawn extra long, because moon hops go so far */
 const HOP={O:[-6.2,3.4], F:[0,1], R:[1,0], LEN:1.7, W:0.85, ROWS:[1,1,2,1,2,1,2,1], drawn:false, claimed:null, rowGroups:[]};
 const hopAt=(along,side)=>[HOP.O[0]+HOP.F[0]*along+HOP.R[0]*side, HOP.O[1]+HOP.F[1]*along+HOP.R[1]*side];
@@ -1444,6 +1598,7 @@ function updateBrain(b,dt){
   g.legs.forEach((l,i)=>{ l.position.y=0.3-drop; l.scale.y=Math.max(0.05,(0.3-drop)/0.3); l.rotation.x=i?rg.lrx:rg.llx; l.rotation.z=(i?1:-1)*rg.lsp; });
   g.head.rotation.set(rg.hx,rg.hy,rg.hz); gazeHead(b,g,b===juneB?0:b===pipB?1:4);
   g.armL.rotation.set(rg.lax,0,rg.laz); g.armR.rotation.set(rg.rax,0,rg.raz);
+  if(g.hi) hiRig(g,b,rg,drop,walking,dt);
   g.tails.forEach((t,i)=>{ t.rotation.z=(i?1:-1)*(0.1+Math.sin(time*2.2+i)*0.08)+(walking?Math.sin(b.walkPhase*2)*0.15:0); });
   b.blinkIn-=dt; if(b.blinkIn<0){ b.blink=0.13; b.blinkIn=2.5+Math.random()*3.5; }
   b.blink=Math.max(0,b.blink-dt); g.eyes.forEach(e=>e.scale.y=b.blink>0?0.15:1);
@@ -1703,6 +1858,8 @@ $('homeBtn').addEventListener('click',()=>callHome());
 $('homeSmall').addEventListener('click',()=>callHome());
 $('goodnightBtn').addEventListener('click',()=>flyAgain(true));
 /* settings: how big the words are (remembered from one visit to the next), the music, and the way back to the title page */
+{ const row=$('setModels'), show=k=>row.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===k))); show(HI_MODELS?'detailed':'classic');
+  row.addEventListener('click',e=>{ const b=e.target.closest('button[data-m]'); if(!b) return; try{ localStorage.setItem('treehouse-models',b.dataset.m); }catch(err){} show(b.dataset.m); $('modelNote').hidden=(b.dataset.m==='detailed')===HI_MODELS; }); }
 const TS_KEY='treehouse-textsize';
 function setTextSize(v,save){ v=[1,1.15,1.3,1.5].includes(+v)?+v:1.15; document.documentElement.style.setProperty('--ts',v); $('setSize').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.ts===v))); if(save){ try{ localStorage.setItem(TS_KEY,String(v)); }catch(e){} } }
 { let v=1.15; try{ v=localStorage.getItem(TS_KEY)||1.15; }catch(e){} setTextSize(v,false); }
@@ -1881,6 +2038,9 @@ function updateParent(p,dt){
   g.upper.rotation.set(r.lean,0,0); g.head.rotation.set(r.hx,r.hy,0);
   g.legs.forEach((l,i)=>l.rotation.x=i?r.lrx:r.llx);
   g.armL.rotation.set(r.lax,0,r.laz); g.armR.rotation.set(r.rax,0,r.raz);
+  if(g.hi){ const H=g.hi; g.legs.forEach((l,i)=>{ const sw=i?r.lrx:r.llx, kn=walking?0.08+0.7*Math.max(0,sw):0.04; H.knees[i].rotation.x=kn; H.feet[i].rotation.x=-(sw+kn)*0.55; });   /* knees and elbows give a little; the mouth moves while they talk */
+    H.elbows.forEach((e,i)=>e.rotation.x=damp(e.rotation.x,p.pose==='hug'?-0.05:(isDad&&i===0?-0.6:-0.25),8,dt));
+    const say=curLine&&curLine.w===(isDad?3:2); H.oh.visible=!!say; H.smile.visible=!say; if(say) H.oh.scale.set(0.95,0.3+0.75*Math.abs(Math.sin(time*9.5)*Math.sin(time*3.1+1)),1); }
 }
 const ARRIVE_SCRIPT=[[0,'We\'re home!'],[2,'There they are! Welcome home, girls!'],[3,'Right on time for dinner.'],[1,'Hi, Dad! Hi, Mom!']];
 const CALL_SCRIPT=[[3,'There! I see the balloons!'],[2,'Girls! Dinner\'s almost ready!'],[0,'Mom! Dad! Hiiii!']];

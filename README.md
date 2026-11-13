@@ -31,7 +31,7 @@ The game remembers earlier trips: the girls count them, Lumi greets them as old 
 
 - **Rendering:** three.js r128, loaded from cdnjs.
 - **Music:** generated live with the Web Audio API: pad chords and a music-box melody all the way, with a flute and harp in the backyard, strings in the sky, glass chimes and a drone in space, a humming choir on the Moon, and harp and strings on the way home. Each place has its own small sounds too: birds and crickets, gusts of wind, faint sparkles in space, frogs and an owl at home.
-- **Characters:** June and Pip each have a small behavior planner. They walk, lean on the railing, peek over it, go inside, climb the ladder, hop, and take turns so they don't bump into each other.
+- **Characters:** June, Pip, Mom and Dad use the detailed models from Trail to the Top (shaped faces, combed hair, pleated dresses, hands with fingers, knees and elbows that bend, mouths that move as they talk), and Lumi has her own: moonlight-white hair with two star-pinned buns and a periwinkle dress scattered with stars. Settings → Characters switches back to the classic models. June and Pip each have a small behavior planner. They walk, lean on the railing, peek over it, go inside, climb the ladder, hop, and take turns so they don't bump into each other.
 - **Landscape:** farm fields, forests, a river and lakes are drawn onto a curved patch of the planet. A town, a city and a ring of mountains fill the horizon.
 - **Saving:** the facts found, Dad's notes, the trip count, the text size, and whether Lumi has been met are kept in your browser's local storage.
 
