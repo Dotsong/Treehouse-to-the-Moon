@@ -2539,7 +2539,7 @@ function birdFavour(){ if(Math.random()<0.5) return {update:()=>false,dispose(){
       return t<22; }, fact:'birds', anchor:b.g, dispose(){ favourOn=false; near.remove(b.g); } }; }
 
 const EVENTS=[
-  {u:0.0025,fn:birdsAcross},{u:0.008,fn:kites},{u:0.013,fn:birdsCircle},{u:0.02,fn:birdFavour},{u:0.1,fn:()=>plane(0)},{u:0.165,fn:()=>plane(1)},
+  {u:0.0025,fn:birdsAcross},{u:0.013,fn:birdsCircle},{u:0.02,fn:birdFavour},{u:0.1,fn:()=>plane(0)},{u:0.165,fn:()=>plane(1)},
   {u:0.44,fn:()=>ufo(0)},{u:0.53,fn:meteorShower},{u:0.76,fn:()=>ufo(1)}
 ];
 const EVENTS_DOWN=[
@@ -2654,7 +2654,6 @@ const FACTS={
   townlights:F('Town lights',SKYK,'#e8b34a','town','Lights you can see from space','At night, astronauts on the space station can see the lights of towns and cities sparkling below, like glitter spilled on a dark floor.','The lights trace the shapes of coastlines, rivers and roads, because that\'s where towns grow.'),
   ears:F('Popping ears',SKYK,'#e88a6a','ears','Why your ears pop','Air presses on everything, even the inside of your ears. As you go up, the air gets thinner, and your ears pop when the pressure inside and outside evens out.','Yawning or swallowing helps your ears pop, which is why some people chew gum on airplanes.'),
   bluesky:F('Blue sky',SKYK,'#4a9ae0','bluesky','Why the sky is blue','Sunlight is made of every color mixed together. The air scatters the blue part of sunlight all over the sky much more than the other colors, so wherever you look, you see blue.','On Mars it\'s the other way round: the daytime sky is a pinkish orange, and sunsets are blue!'),
-  kite:F('Kites',VIS,'#ff6f61','kite','How kites fly','The wind pushes against a kite while its string holds it at a slant, so the air is pushed down and the kite is pushed up.','People in China were flying kites more than 2,000 years ago.'),
   hotair:F('Hot-air balloon',VIS,'#e2574c','hotair','Flying on hot air','A hot-air balloon has a burner that heats the air inside it. Hot air is lighter than cold air, so the balloon floats up. To come down, the pilot lets the air cool.','The first passengers in a hot-air balloon, in 1783, were a sheep, a duck and a rooster!'),
   iss:F('Space station',VIS,'#6f8fd0','iss','A home in space','The International Space Station is about as long as a football field. Astronauts live and work on it, about 400 km above Earth.','It goes all the way around Earth about every 90 minutes, so the crew sees about 16 sunrises and 16 sunsets every day!'),
   satellites:F('Satellites',SPACE,'#d9a441','satellite','Machines circling Earth','Thousands of satellites circle Earth. Some take pictures of the weather, some carry phone calls and TV, and some help maps know exactly where you are.','The Moon is a satellite too: a natural one. It has been circling Earth for billions of years.'),
@@ -2784,7 +2783,6 @@ const MARKDEFS=[
   {k:'townlights',at:(o,u)=>(nightK>0.6&&u>0.015&&u<0.2)?(o.set(TOWN.x,12,TOWN.z),'w'):false},
   {k:'ears',at:(o,u)=>(!state.returning&&u>0.01&&u<0.06)?(o.set(0.6,0.32,0),'n'):false},
   {k:'bluesky',at:(o,u)=>(!state.returning&&nightK<0.4&&u>0.11&&u<0.28)?(o.set(-0.62,0.3,0),'n'):false},
-  {k:'kite',at:o=>eventAnchor('kite',o)},
   {k:'hotair',at:o=>eventAnchor('hotair',o)},
   {k:'iss',at:o=>eventAnchor('iss',o)},
   {k:'satellites',at:(o,u)=>(!state.landed&&u>0.3&&u<0.6)?(o.set(0.62,0.38,0),'n'):false},

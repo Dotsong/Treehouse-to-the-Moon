@@ -10,12 +10,12 @@ The whole game is a single file, `index.html`. Open it in a browser to play. It 
 - **Drag** to look around. **Scroll** or **pinch** to zoom.
 - **Pause** with the round button in the top-right corner, or press **P** or the space bar. The round book button under it opens the fact book.
 - **Pace** speeds the flight up to 2× or 4×. **Settings** changes the text size and the music, and goes back to the start.
-- **Little book tags** float over things in the scene. Tap one to open the fact book and read a science fact. There are 43 to collect, and some only appear while a visitor (birds, kites, a hot-air balloon, the space station, a UFO) is passing. A tag disappears once its fact is in the book.
+- **Little book tags** float over things in the scene. Tap one to open the fact book and read a science fact. There are 42 to collect, and some only appear while a visitor (birds, a hot-air balloon, the space station, a UFO) is passing. A tag disappears once its fact is in the book.
 
 ## What happens on the way
 
 1. **The backyard at sunset.** Fireflies, the old oak, Mom and Dad's house across the lawn.
-2. **Up through the sky.** Birds race the treehouse, kites fly over the fields toward town, a little bird sometimes stops on the side railing for Pip's cookie crumbs, a cloud bank swallows the treehouse for a few seconds and a hot-air balloon is waiting on the other side, and two jet planes cross with contrails.
+2. **Up through the sky.** Birds race the treehouse, a little bird sometimes stops on the side railing for Pip's cookie crumbs, a cloud bank swallows the treehouse for a few seconds and a hot-air balloon is waiting on the other side, and two jet planes cross with contrails.
 3. **Into space.** The atmosphere layers tick by (troposphere to exosphere), shooting stars streak by, there's a meteor shower, and two friendly UFOs come to wave.
 4. **On the Moon.** The treehouse hovers so the rope ladder touches the ground. The space station sails across the black sky overhead. The girls climb down, plant a flag, leave footprints, build moon castles and rock towers, draw pictures in the dust, make moon angels, collect souvenir rocks in a bucket, and play extra-long low-gravity hopscotch. What they do, and in what order, is a little different every time. After a while, Lumi, a real moon girl, peeks out from behind a boulder, ducks back, then walks out and joins their games. When the sisters get hungry, they invite her home for dinner.
 5. **Home for dinner.** The trip back happens at night. The town and city lights come on, Mom and Dad wait on the lawn with a lantern, welcome Lumi to Earth, and everyone walks inside for spaghetti.

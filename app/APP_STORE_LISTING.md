@@ -23,7 +23,7 @@ Treehouse to the Moon is a slow, dreamy 3D adventure with nothing to beat and no
 ON THE WAY UP
 • Float over farms, forests, rivers, a little town and a twinkling city
 • Rise through every layer of the sky, from the clouds to outer space
-• Wave at kites, a hot-air balloon and friendly UFOs
+• Wave at a hot-air balloon and friendly UFOs
 • Make wishes on shooting stars
 
 ON THE MOON
@@ -38,7 +38,7 @@ HOME FOR DINNER
 • Mom and Dad are waiting on the lawn with a lantern, and the spaghetti is almost ready
 
 A FACT BOOK TO FILL
-Little book tags float over things along the way. Tap one to read a kid-friendly science fact about balloons, clouds, the layers of the atmosphere, stars, the Moon and more. There are 43 to collect.
+Little book tags float over things along the way. Tap one to read a kid-friendly science fact about balloons, clouds, the layers of the atmosphere, stars, the Moon and more. There are 42 to collect.
 
 MADE FOR CALM
 • Gentle music made just for the trip
