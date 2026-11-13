@@ -2280,7 +2280,7 @@ const REMEMBER={
 };
 function rememberLine(){ const k=phaseKey(state.u); const opts=Object.keys(REMEMBER).filter(f=>found.includes(f)&&REMEMBER[f].at.includes(k)&&!rememberSaid.includes(f));
   if(!opts.length) return null; const f=opts[Math.floor(Math.random()*opts.length)]; rememberSaid.push(f); return REMEMBER[f].l; }
-let rememberSaid=[];
+let rememberSaid=[], lumiAgain=false;
 const SPOT_AGAIN=[[1,'June... that rock just giggled. Again!'],[0,'I know that giggle.'],[1,'Lumi? Is that you?'],[4,'...'],[4,'You came BACK!']];
 const MEET_AGAIN=[[4,'I saved all your footprints. Nobody stepped on a single one.'],[0,'Hi, Lumi! We missed you.'],[1,'We came to play again!'],[4,'I knew you would. I watched your treehouse every night.']];
 
@@ -2292,20 +2292,21 @@ const DAD_NOTES={
   moon:'Dear Moon, I wave at you from this window every night. Wave back sometime.',
   home:'The best part of any trip is coming home, especially if it is spaghetti night.'
 };
-const NOTE_AT=[['yard',u=>!state.returning&&!state.landed&&u>0.004&&u<0.03],['clouds',u=>!state.returning&&!state.landed&&u>0.06&&u<0.14],['space',u=>!state.returning&&!state.landed&&u>0.36&&u<0.55],
-  ['moon',()=>state.landed&&!state.callHome&&moonT>24&&lumiStage!==1&&lumiStage!==2&&lumiStage!==4],['home',u=>state.returning&&!state.finale&&u>0.2&&u<0.45]];
-const NOTE_FIND=[[[1,'June! There\'s a note tucked in the roof!'],[0,'It\'s Dad\'s writing!']],[[0,'Pip, look. Another one of Dad\'s notes.'],[1,'He hid them EVERYWHERE.']],
-  [[1,'Another note from Dad!'],[0,'Read it, read it!']],[[0,'There\'s a note in the bucket!'],[1,'Dad thought of everything.']]];
+const NOTE_AT=[['yard',u=>!state.returning&&!state.landed&&u>0.003&&u<0.05],['clouds',u=>!state.returning&&!state.landed&&u>0.06&&u<0.2],['space',u=>!state.returning&&!state.landed&&u>0.33&&u<0.7],
+  ['moon',()=>state.landed&&!state.callHome&&moonT>24&&lumiStage!==1&&lumiStage!==2&&lumiStage!==4],['home',u=>state.returning&&!state.finale&&u>0.15&&u<0.6]];
+const NOTE_FIND={yard:[[1,'June! There\'s a note tucked in the roof!'],[0,'It\'s Dad\'s writing!']],clouds:[[0,'Pip, there\'s a paper stuck behind the window.'],[1,'Another note from Dad!']],
+  space:[[1,'A note was hiding in the cookie tin!'],[0,'Dad hid them EVERYWHERE.']],moon:[[0,'There\'s a note at the bottom of the bucket!'],[1,'Dad thought of everything.']],
+  home:[[1,'One more note, under the cushion!'],[0,'Read it, read it!']]};
 const noteEl=$('dadNote'); let noteT=0, notesThisTrip=[];
 function showDadNote(key){ $('dadNoteText').textContent=DAD_NOTES[key]; noteEl.classList.add('show'); noteT=16; }
 function hideDadNote(){ noteT=0; noteEl.classList.remove('show'); }
 function updateNotes(dt){
   if(noteT>0){ noteT-=dt; if(noteT<=0) hideDadNote(); return; }
-  if(!state.started||film.k>0.1||!quiet()||activeEvents.length) return;
-  for(const [k,ok] of NOTE_AT){ if(notesThisTrip.includes(k)||!ok(state.u)) continue;
-    notesThisTrip.push(k); const first=!mem.notes.length; if(!mem.notes.includes(k)){ mem.notes.push(k); saveMem(); }
+  if(!state.started||film.k>0.1||!quiet()) return;
+  for(const [k,ok] of NOTE_AT){ if(notesThisTrip.includes(k)||mem.notes.includes(k)||!ok(state.u)) continue;   /* each note is found once, ever */
+    notesThisTrip.push(k); const first=!mem.notes.length; mem.notes.push(k); saveMem();
     if(first) narrate('Tucked into the treehouse, the girls found a folded note in Dad\'s handwriting.');
-    playScript(NOTE_FIND[notesThisTrip.length%NOTE_FIND.length]); speakIn=14; setTimeout(()=>{ if(state.started) showDadNote(k); },2600); break; } }
+    playScript(NOTE_FIND[k]); speakIn=14; setTimeout(()=>{ if(state.started) showDadNote(k); },2600); break; } }
 function resetTripMemory(){ notesThisTrip=[]; rememberSaid=[]; hideDadNote(); }
 
 /* a small favour: a little bird lands on the railing, and Pip shares her cookie crumbs */
@@ -2335,7 +2336,7 @@ let activeEvents=[];
 function resetEvents(){ EVENTS.forEach(e=>{e.done=false;e.wait=0;}); EVENTS_DOWN.forEach(e=>{e.done=false;e.wait=0;}); activeEvents.forEach(a=>a.dispose()); activeEvents=[]; bankSaid=0; }
 function updateEvents(dt,u){
   near.position.copy(house.position); near.quaternion.copy(qFrame); near.updateMatrixWorld();
-  if(state.started&&!state.landed&&!state.returning&&!state.home) EVENTS.forEach(e=>{ if(!e.done&&u>=e.u){ e.wait=(e.wait||0)+dt; if((quiet()&&!activeEvents.length)||e.wait>10){ e.done=true; e.wait=0; activeEvents.push(e.fn()); } } });   /* each waits for a lull, but not for long */
+  if(state.started&&!state.landed&&!state.returning&&!state.home) EVENTS.forEach(e=>{ if(!e.done&&u>=e.u){ e.wait=(e.wait||0)+dt; if((quiet()&&!activeEvents.length)||e.wait>20){ e.done=true; e.wait=0; activeEvents.push(e.fn()); } } });   /* each waits for a lull, but not for long */
   if(state.returning&&!state.finale) EVENTS_DOWN.forEach(e=>{ if(!e.done&&u<=e.u){ e.wait=(e.wait||0)+dt; if((quiet()&&!activeEvents.length)||e.wait>10){ e.done=true; e.wait=0; activeEvents.push(e.fn()); } } });
   activeEvents=activeEvents.filter(a=>{ const alive=a.update(dt); if(!alive) a.dispose(); return alive; });
   updateSmoke(dt); updateButterflies(); updateCars(dt); settlePeaks(); updateNotes(dt);
@@ -2655,7 +2656,7 @@ function beginFlight(){
   prep=null; $('skipBtn').hidden=true; mooring.visible=false;
   state.started=true; idle=0; narrate('Fifty balloons turned out to be exactly enough.');
   const trip=++mem.trips; saveMem(); resetTripMemory();
-  if(trip>1) setTimeout(()=>{ if(state.started&&!state.landed&&quiet()) playScript(trip===2?[[1,'Our second trip to the Moon!'],[0,'And it still feels like the first time.']]:[[1,'Trip number '+trip+'!'],[0,'The Moon must think we live up there by now.']]); },7000);
+  if(trip>1){ playScript(trip===2?[[1,'Our second trip to the Moon!'],[0,'And it still feels like the first time.']]:[[1,'Trip number '+trip+'!'],[0,'The Moon must think we live up there by now.']]); speakIn=10; }
   BRAINS.forEach(b=>b.hold=null);
   together([{pose:'wave',dur:13+Math.random()*2}],[-0.65,0.55]);
 }
@@ -2709,13 +2710,13 @@ function updateLumi(dt){
     lumiB.face=lumiB.faceT=faceTo(LUMI_HIDE,[3.5,6.5]); setPose(lumiB,'doorpeek',lumiB.face);
     HOP.claimed=null; castles.forEach(c=>{ if(c.claimed&&!c.g.visible) c.claimed=false; });
     goPose(juneB,[3.3,7.3],'idle',faceTo([3.3,7.3],BOULDER)); goPose(pipB,[4.8,6.4],'idle',faceTo([4.8,6.4],BOULDER));
-    hushBubbles(); playScript(mem.lumi?SPOT_AGAIN:SPOT_SCRIPT); narrate(mem.lumi?'Somebody up there had been waiting for them to come back.':'It turned out they were not the only ones up there.');
+    lumiAgain=mem.lumi; hushBubbles(); playScript(mem.lumi?SPOT_AGAIN:SPOT_SCRIPT); narrate(mem.lumi?'Somebody up there had been waiting for them to come back.':'It turned out they were not the only ones up there.');
   }
   else if(lumiStage===1&&lumiStageT>4&&!script.length&&quiet()){
     lumiStage=2; lumiStageT=0; goPose(lumiB,[4.9,8.2],'wave',faceTo([4.9,8.2],[4,6.9])); playScript(mem.lumi?MEET_AGAIN:meetScript()); mem.lumi=true; saveMem();
   }
   else if(lumiStage===2&&!script.length&&quiet()){
-    lumiStage=3; lumiStageT=0; lumiHungryAt=moonT+130; narrate('Her name was Lumi, and she had been hoping for visitors for a very long time.');
+    lumiStage=3; lumiStageT=0; lumiHungryAt=moonT+130; narrate(lumiAgain?'Lumi had kept watch over their footprints the whole time they were gone.':'Her name was Lumi, and she had been hoping for visitors for a very long time.');
     ACTIVE().forEach(b=>{ b.hold=null; b.cur=null; b.queue.length=0; b.target=null; });
   }
   else if(lumiStage===3&&moonT>lumiHungryAt&&!ladderBusy()){
