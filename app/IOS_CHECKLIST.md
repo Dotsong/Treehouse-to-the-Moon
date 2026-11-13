@@ -72,7 +72,7 @@ At [appstoreconnect.apple.com](https://appstoreconnect.apple.com), go to **Apps*
 - **Platform:** iOS. **Name:** Treehouse to the Moon. **Bundle ID:** the one from step 3. **SKU:** anything unique, for example `treehouse-moon-1`.
 - Fill in the listing from `APP_STORE_LISTING.md`: subtitle, description, keywords and categories.
 - **Privacy Policy URL:** turn on GitHub Pages for the repo (**Settings → Pages →** branch `main`, folder `/`). The policy will then be at `https://dotsong.github.io/Treehouse-to-the-Moon/privacy.html`. **First, replace the contact placeholder in `privacy.html` with a real email address.**
-- **App Privacy:** answer **"Data Not Collected"**. The game has no accounts, ads, analytics or tracking. The only things it saves are which facts and notes you've found, the trip count and the text size, and those stay on the device.
+- **App Privacy:** answer **"Data Not Collected"**. The game has no accounts, ads, analytics or tracking. The only things it saves are which facts you've found, the trip count and the text size, and those stay on the device.
 - **Age rating:** answer **None** to everything, which gives **4+**.
 - **Kids category (optional):** listing it under **Kids** (age band 6–8 suits it) adds extra review checks: no ads, no third-party analytics, and a grown-up check before any outside link. The game already meets those, since it has no outside links at all.
 - **Screenshots:** ready-made ones are in `screenshots/`: eight at **1320×2868** for the 6.9-inch iPhone slot and eight at **2064×2752** for the 13-inch iPad slot. Drag them in, in order. If Apple asks for other sizes later, use **File → Save Screen** (⌘S) in the simulator.

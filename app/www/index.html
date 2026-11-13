@@ -578,13 +578,13 @@ const spriteTex=alphaTex(64,(u,v)=>ramp(Math.hypot(u-0.5,v-0.5)*2,[[0,1],[0.35,0
 
 /* stars: two layers that twinkle out of phase */
 const starLayers=[];
-for(let L=0;L<2;L++){
-  const N=1400, pos=new Float32Array(N*3), col=new Float32Array(N*3);
+for(let L=0;L<4;L++){
+  const N=760, pos=new Float32Array(N*3), col=new Float32Array(N*3);
   const tints=[[1,1,1],[0.8,0.87,1],[1,0.9,0.78],[1,0.82,0.9]];
   for(let i=0;i<N;i++){ const v=new THREE.Vector3(rnd()*2-1,rnd()*2-1,rnd()*2-1).normalize().multiplyScalar(9000);
     pos.set([v.x,v.y,v.z],i*3); const t=tints[Math.floor(rnd()*4)], b=0.55+rnd()*0.45; col.set([t[0]*b,t[1]*b,t[2]*b],i*3); }
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3));
-  const m=new THREE.PointsMaterial({size:(L?2.4:3.4)*DPR,sizeAttenuation:false,map:spriteTex,vertexColors:true,transparent:true,depthWrite:false,fog:false,opacity:0,blending:THREE.AdditiveBlending});
+  const m=new THREE.PointsMaterial({size:[3.6,2.4,3.0,2.0][L]*DPR,sizeAttenuation:false,map:spriteTex,vertexColors:true,transparent:true,depthWrite:false,fog:false,opacity:0,blending:THREE.AdditiveBlending});
   const pts=new THREE.Points(g,m); pts.renderOrder=-1; scene.add(pts); starLayers.push(pts);
 }
 
@@ -1489,6 +1489,8 @@ function rigTarget(b,pose,tt,walking){
   if(walking){ const w=Math.sin(b.walkPhase);
     if(onMoon(b)){ R.llx=w*0.35;R.lrx=-w*0.35;R.laz=-0.55;R.raz=0.55;R.rootY=Math.abs(Math.sin(b.walkPhase*0.5))*0.32;R.hy=0;R.hx=-0.1; return; }
     R.llx=w*0.6;R.lrx=-w*0.6;R.lax=-w*0.55;R.rax=w*0.55;R.rootY=Math.abs(Math.cos(b.walkPhase))*0.035;R.hy=0;R.lean=0.08; return; }
+  if(pose==='wavex') pose='wave';   /* an excited wave */
+  else if(pose==='wave'&&b===lumiB&&!(state.callHome||state.returning||state.home)) pose='idle';   /* Lumi saves her waving for when she is excited */
   switch(pose){
     case 'lean': R.lean=0.72;R.hx=0.32;R.hy=Math.sin(tt*0.4+s)*0.55;R.hz=Math.sin(tt*0.33+s)*0.15;
       R.lax=-1.0;R.rax=-1.0;R.laz=-0.3;R.raz=0.3;R.lrx=0.55*Math.max(0,Math.sin(tt*1.7+s));R.rootY=b.tiptoe||0; break;
@@ -1498,6 +1500,7 @@ function rigTarget(b,pose,tt,walking){
     case 'wave': R.hz=0.15*b.hand;
       if(b.hand>0){R.raz=2.6+Math.sin(tt*7)*0.4;} else {R.laz=-2.6-Math.sin(tt*7)*0.4;}
       R.rootY=Math.abs(Math.sin(tt*3.2))*0.04; break;
+    case 'point': R.hy=0;R.hx=-0.05;R.lean=0.05; if(b.hand>0){R.rax=-1.45;R.raz=0.3;} else {R.lax=-1.45;R.laz=-0.3;} break;
     case 'look': R.hx=-0.6;R.lean=-0.12;R.hy=Math.sin(tt*0.3+s)*0.3;
       if(b.hand>0){R.rax=-2.7;R.raz=0.25;} else {R.lax=-2.7;R.laz=-0.25;} break;
     case 'hop': { const h=Math.abs(Math.sin(tt*5.2)); R.rootY=h*0.24;R.llx=R.lrx=0.35*h;R.laz=-2.5;R.raz=2.5;R.hx=-0.2; break; }
@@ -1640,7 +1643,7 @@ function spawnShooter(radiant){
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
   const line=new THREE.Line(g,new THREE.LineBasicMaterial({color:0xfff6ec,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
   scene.add(line); shooters.push({line,start,vel,age:0}); lastShootT=time;
-  if(!radiant&&quiet()&&time-lastShootLine>90&&Math.random()<0.2){ lastShootLine=time; speak(nextLine('shoot',SHOOT_LINES)); speakIn=8; }
+  if(!radiant&&quiet()&&!sceneBusy()&&time-lastShootLine>90&&Math.random()<0.2){ lastShootLine=time; speak(nextLine('shoot',SHOOT_LINES)); speakIn=8; }
 }
 
 /* ---------- music: generated live ---------- */
@@ -1880,7 +1883,7 @@ const pointers=new Map(); let pinch=0;
 const pdist=()=>{const a=[...pointers.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);};
 canvas.addEventListener('pointerdown',e=>{ canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId,{x:e.clientX,y:e.clientY}); idle=0; if(pointers.size===2) pinch=pdist(); });
 canvas.addEventListener('pointermove',e=>{ const pr=pointers.get(e.pointerId); if(!pr) return; idle=0;
-  if(pointers.size===1){ camTheta-=(e.clientX-pr.x)*0.006; userPhi=clamp(userPhi+(e.clientY-pr.y)*0.004,-0.6,1.0); pr.x=e.clientX; pr.y=e.clientY; }
+  if(pointers.size===1){ camTheta-=(e.clientX-pr.x)*0.006; camTurn=null; userPhi=clamp(userPhi+(e.clientY-pr.y)*0.004,-0.6,1.0); pr.x=e.clientX; pr.y=e.clientY; }
   else { pr.x=e.clientX; pr.y=e.clientY; const nd=pdist(); if(pinch>0) zoom=clamp(zoom*pinch/nd,0.5,2.2); pinch=nd; } });
 const endPtr=e=>{ pointers.delete(e.pointerId); pinch=0; };
 canvas.addEventListener('pointerup',endPtr); canvas.addEventListener('pointercancel',endPtr);
@@ -1925,7 +1928,10 @@ function phaseKey(u){
 function nextLine(key,src){ const d=decks[key]||(decks[key]=[]); if(!d.length){ d.push(...src); for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];} } return d.pop(); }
 /* one bubble at a time: every line waits its turn and stays up long enough to read */
 const lineTime=tx=>1.6+tx.length*0.06;
-function showLine(w,tx){ bubbles.forEach((bb,i)=>{ if(i!==w){ bb.t=0; bb.el.classList.remove('show'); } });
+const LUMI_GEST=[[/^I watched you/,'point'],[/^Yes, please! I know|^You came BACK|^Yes! Let's go|^Hello, Earth people|^Bye, Moon/,'wavex']];
+function lumiGesture(w,tx){ if(w!==4||!lumiB.active||!arrived(lumiB)) return; const g=LUMI_GEST.find(([re])=>re.test(tx)); if(!g) return;
+  lumiB.gest={prev:lumiB.hold||'idle'}; setPose(lumiB,g[1],lumiB.face); }
+function showLine(w,tx){ lumiGesture(w,tx); bubbles.forEach((bb,i)=>{ if(i!==w){ bb.t=0; bb.el.classList.remove('show'); } });
   const bb=bubbles[w]; bb.el.querySelector('.txt').textContent=tx; bb.t=lineTime(tx)*(film.k>0.5?1.35:1); bb.el.classList.add('show'); curLine={w,t:bb.t,tx}; }
 function say(i,text){ script.push([i,text]); }
 function speak(line,i){ if(i===undefined) i=Math.random()<0.5?0:1;
@@ -1944,10 +1950,10 @@ const quiet=()=>!curLine&&!script.length;
 const hp=new THREE.Vector3();
 function updateSpeech(dt){
   bubbles.forEach(bb=>{ if(bb.t>0){ bb.t-=dt; if(bb.t<=0) bb.el.classList.remove('show'); } });
-  if(curLine){ curLine.t-=dt; if(curLine.t<=0){ curLine=null; lineGap=0.45; } }
+  if(curLine){ curLine.t-=dt; if(curLine.t<=0){ curLine=null; lineGap=0.45; if(lumiB.gest){ if(arrived(lumiB)) setPose(lumiB,lumiB.gest.prev,lumiB.face); lumiB.gest=null; } } }
   else if(lineGap>0) lineGap-=dt;
   else if(script.length){ const [w,tx]=script.shift(); if(bubbles[w]&&bubbles[w].root.visible) showLine(w,tx); }
-  else if(state.started&&!state.home&&!state.callHome&&!state.finale){ speakIn-=dt; if(speakIn<=0){ chatter(); speakIn=(state.landed?5:7)+Math.random()*7; } }
+  else if(state.started&&!state.home&&!state.callHome&&!state.finale&&!sceneBusy()){ speakIn-=dt; if(speakIn<=0){ chatter(); speakIn=(state.landed?5:7)+Math.random()*7; } }
   const xs=[]; let sx=0, n=0;
   const filmed=film.k>0.6, fkey=film.key+film.id, freshB=filmed&&fkey!==film.bubKey; if(filmed) film.bubKey=fkey;
   bubbles.forEach((bb,i)=>{ bb.head.getWorldPosition(hp); hp.project(camera);
@@ -1966,7 +1972,7 @@ function updateSpeech(dt){
   bubbles.forEach((bb,i)=>bb.el.classList.toggle('right',xs[i]<innerWidth/2));
 }
 /* sky events wait for whoever is talking instead of cutting them off */
-function announce(line){ if(state.finale) return; const s=Math.random()<0.5?0:1; if(script.length>2) script.length=2;
+function announce(line){ if(state.finale||sceneBusy()) return; const s=Math.random()<0.5?0:1; if(script.length>2&&!favourOn) script.length=2;   /* (a little scene in progress is never cut short) */
   if(Array.isArray(line)) script.push([s,line[0]],[1-s,line[1]]); else script.push([s,line]); speakIn=9; }
 function hushBubbles(){ bubbles.forEach(bb=>{bb.t=0;bb.el.classList.remove('show');}); curLine=null; lineGap=0; script=[]; speakIn=4; }
 
@@ -2149,17 +2155,25 @@ const ease=t=>t*t*(3-2*t);
 
 /* birds, modelled facing +z */
 const birdMat=new THREE.MeshLambertMaterial({color:'#4a3e60',side:THREE.DoubleSide});
-const birdBody=new THREE.SphereGeometry(0.22,10,8), birdHead=new THREE.SphereGeometry(0.13,8,6), beakGeo=new THREE.ConeGeometry(0.05,0.16,5);
-const wingGeoR=new THREE.PlaneGeometry(1.1,0.5).rotateX(-Math.PI/2).translate(0.55,0,0);
-const wingGeoL=new THREE.PlaneGeometry(1.1,0.5).rotateX(-Math.PI/2).translate(-0.55,0,0);
+/* birds, modelled smoothly: a teardrop body with a pale breast, a round head with eyes, a pointed beak, feathered wings and a forked tail */
+const birdBody=hiBlob(0.22,24,16,v=>{ v.z*=2.2; v.x*=0.82; v.y*=0.8; if(v.z<0) v.y*=1-0.25*(-v.z/0.48); }), birdHead=new THREE.SphereGeometry(0.13,20,14), beakGeo=new THREE.ConeGeometry(0.045,0.17,12);
+const birdBreast=hiBlob(0.2,20,12,v=>{ v.z*=1.7; v.x*=0.7; v.y*=0.55; }), breastMat=L('#d9c7b4'), eyeMatB=new THREE.MeshBasicMaterial({color:0x1d1a2c});
+function wingShape(){ const s=new THREE.Shape(); s.moveTo(0,0.2); s.bezierCurveTo(0.35,0.3,0.8,0.22,1.15,0.0);
+  const n=6; for(let i=0;i<=n;i++){ const x=1.15-i*(1.15/n), y=-0.05-0.18*Math.sin(i/n*Math.PI*0.9); s.lineTo(x+0.06,y+0.04); s.lineTo(x,y); } s.lineTo(0,-0.22); s.closePath(); return s; }
+const wingGeoR=new THREE.ShapeGeometry(wingShape(),10).rotateX(-Math.PI/2);
+const wingGeoL=wingGeoR.clone().scale(-1,1,1);
+const tailGeo=(()=>{ const s=new THREE.Shape(); s.moveTo(-0.08,0); s.lineTo(0.08,0); s.lineTo(0.2,-0.38); s.lineTo(0.05,-0.28); s.lineTo(0,-0.34); s.lineTo(-0.05,-0.28); s.lineTo(-0.2,-0.38); s.closePath(); return new THREE.ShapeGeometry(s,6).rotateX(-Math.PI/2); })();
 const beakMat=L('#ffb36b');
 function makeBird(){
   const g=new THREE.Group();
-  const body=new THREE.Mesh(birdBody,birdMat); body.scale.set(0.8,0.8,2.2); g.add(body);
-  const h=new THREE.Mesh(birdHead,birdMat); h.position.set(0,0.1,0.48); g.add(h);
-  const bk=new THREE.Mesh(beakGeo,beakMat); bk.rotation.x=Math.PI/2; bk.position.set(0,0.08,0.64); g.add(bk);
-  const wr=new THREE.Mesh(wingGeoR,birdMat), wl=new THREE.Mesh(wingGeoL,birdMat); g.add(wr,wl);
-  g.scale.setScalar(1.5); near.add(g); return {g,wr,wl,ph:Math.random()*6};
+  g.add(new THREE.Mesh(birdBody,birdMat));
+  const br=new THREE.Mesh(birdBreast,breastMat); br.position.set(0,-0.06,0.08); g.add(br);
+  const h=new THREE.Mesh(birdHead,birdMat); h.position.set(0,0.12,0.5); g.add(h);
+  [-1,1].forEach(s=>{ const e=new THREE.Mesh(new THREE.SphereGeometry(0.028,10,8),eyeMatB); e.position.set(s*0.085,0.04,0.07); h.add(e); });
+  const bk=new THREE.Mesh(beakGeo,beakMat); bk.rotation.x=Math.PI/2; bk.position.set(0,0.1,0.68); g.add(bk);
+  const tl=new THREE.Mesh(tailGeo,birdMat); tl.position.set(0,0.02,-0.42); g.add(tl);
+  const wr=new THREE.Mesh(wingGeoR,birdMat), wl=new THREE.Mesh(wingGeoL,birdMat); wr.position.set(0.1,0.08,0.05); wl.position.set(-0.1,0.08,0.05); g.add(wr,wl);
+  g.scale.setScalar(1.5); near.add(g); return {g,wr,wl,h,ph:Math.random()*6};
 }
 function flapBirds(list,t){ list.forEach(b=>{ const f=Math.sin(t*9+b.ph)*0.7; b.wr.rotation.z=f; b.wl.rotation.z=-f; }); }
 function disposeGroup(arr){ arr.forEach(o=>near.remove(o.g||o)); }
@@ -2343,7 +2357,7 @@ const lander=new THREE.Group(); { const foil=new THREE.MeshStandardMaterial({col
   const flg=new THREE.Mesh(new THREE.PlaneGeometry(1.3,0.85),new THREE.MeshLambertMaterial({color:'#f3efe6',side:THREE.DoubleSide})); flg.position.set(4.85,2.1,1.5); lander.add(flg);
   [[0,'#c84a4a'],[0.24,'#c84a4a']].forEach(([y,c])=>{ const st=new THREE.Mesh(new THREE.PlaneGeometry(1.3,0.08),new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide})); st.position.set(4.85,1.92+y,1.51); lander.add(st); });
   const cant=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.4),new THREE.MeshBasicMaterial({color:'#3f4a8a',side:THREE.DoubleSide})); cant.position.set(4.45,2.32,1.52); lander.add(cant);
-  const LX=-15, LZ=19; lander.position.set(LX,0,LZ); lander.rotation.y=0.7; lander.userData.at=[LX,LZ]; moonMarks.add(lander); }
+  const LX=-15, LZ=19; lander.position.set(LX,0,LZ); lander.rotation.y=0.7; lander.userData.at=[LX,LZ]; }   /* (built but not placed: the Moon is theirs alone) */
 function placeLander(){ const [x,z]=lander.userData.at; lander.position.y=groundY(x,z); }
 
 /* sky visitors that come by once each, low to high: kites over the town, a hot-air balloon, a weather balloon racing up,
@@ -2351,23 +2365,30 @@ function placeLander(){ const [x,z]=lander.userData.at; lander.position.y=ground
 /* where the camera is looking, flattened, in the treehouse's own frame: visitors arrive in front of it, so they are seen however the view is turned */
 const _vb=new THREE.Vector3();
 let camTh=-Math.PI/4, camThetaSeen=-Math.PI/4;
+/* now and then the view turns by itself to watch something go by (as it does for the sky whale in Trail to the Top); a drag stops it */
+let camTurn=null;
+function lookToward(P,aside){ const d=house.worldToLocal(_vb.copy(P)); camTurn={th:Math.atan2(-d.x,-d.z)+(aside||0.35),t:0}; }
+function updateCamTurn(dt){ if(!camTurn) return; camTurn.t+=dt; let df=camTurn.th-camTheta; df=Math.atan2(Math.sin(df),Math.cos(df)); camTheta+=df*Math.min(1,dt*0.9); if(camTurn.t>5||Math.abs(df)<0.01) camTurn=null; } const _cg=new THREE.Vector3(), walkSmooth=new THREE.Vector3(); let walkSmoothOn=false;
 function viewBasis(){ const th=camTheta+(camTh-camThetaSeen); const f=new THREE.Vector3(-Math.sin(th),0,-Math.cos(th)); return {f,r:new THREE.Vector3().crossVectors(f,new THREE.Vector3(0,1,0))}; }
 const at=(B,a,b,y,out)=>(out||new THREE.Vector3()).copy(B.f).multiplyScalar(a).addScaledVector(B.r,b).setY(y);
-function kites(){ const B=viewBasis(); const g=new THREE.Group(); near.add(g); const ks=[];
-  [['#ff6f61','#fff3a3',26,-7,1],['#5b8fd0','#9fd8ff',34,9,-4]].forEach(([c1,c2,a,b,y],i)=>{ const P=at(B,a,b,y), x=P.x, z=P.z; const k=new THREE.Group();
+function kites(){ const g=new THREE.Group(); scene.add(g); const ks=[];   /* flown from the fields halfway to the town, so they stay where they are as the treehouse rises past */
+  const mid=new THREE.Vector3().copy(house.position).lerp(new THREE.Vector3(TOWN.x,0,TOWN.z),0.5), H=house.position.y;
+  const COLS=[['#ff6f61','#fff3a3'],['#5b8fd0','#9fd8ff'],['#f2c230','#e2574c'],['#5aa86a','#fff3a3'],['#c6a8ff','#ffffff'],['#ff9eb5','#5b8fd0']];
+  COLS.forEach(([c1,c2],i)=>{ const k=new THREE.Group();
     const sh=new THREE.Shape(); sh.moveTo(0,1.4); sh.lineTo(0.9,0); sh.lineTo(0,-1.6); sh.lineTo(-0.9,0); sh.closePath();
-    const sail=new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshBasicMaterial({color:c1,side:THREE.DoubleSide})); k.add(sail);
+    k.add(new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshBasicMaterial({color:c1,side:THREE.DoubleSide})));
     const cross=new THREE.Mesh(new THREE.PlaneGeometry(0.08,2.9),new THREE.MeshBasicMaterial({color:c2,side:THREE.DoubleSide})); cross.position.z=0.01; k.add(cross);
-    const tail=[]; for(let j=0;j<7;j++){ const b=new THREE.Mesh(new THREE.PlaneGeometry(0.45,0.22),new THREE.MeshBasicMaterial({color:j%2?c2:c1,side:THREE.DoubleSide})); k.add(b); tail.push(b); }
-    const strG=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,-60,0)]);
-    const str=new THREE.Line(strG,new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.6})); k.add(str);
-    k.position.set(x,y,z); g.add(k); ks.push({k,tail,x,y,z,ph:i*2}); });
-  narrate('Somebody in the town below was flying kites, and the kites were nearly as high as the treehouse.');
-  announce(['Kites!','Hi, kite people!']); let t=0;
-  return { update(dt){ t+=dt; for(const K of ks){ K.k.position.set(K.x+Math.sin(t*0.7+K.ph)*1.2,K.y-t*0.9+Math.sin(t*1.1+K.ph)*0.8,K.z); K.k.rotation.z=Math.sin(t*1.4+K.ph)*0.35; K.k.lookAt(camera.position);
-      K.tail.forEach((b,j)=>{ b.position.set(Math.sin(t*4+j*0.8+K.ph)*0.25*(j+1)*0.4,-1.8-j*0.45,0); b.rotation.z=Math.sin(t*5+j)*0.6; }); }
-      return t<26; }, fact:'kite', anchor:ks[0].k, dispose(){ near.remove(g); } }; }
-function hotAir(){ const B=viewBasis(), g=new THREE.Group(); near.add(g);
+    const tail=[]; for(let j=0;j<8;j++){ const b=new THREE.Mesh(new THREE.PlaneGeometry(0.45,0.22),new THREE.MeshBasicMaterial({color:j%2?c2:c1,side:THREE.DoubleSide})); k.add(b); tail.push(b); }
+    const x=mid.x+(i%3-1)*16+Math.sin(i*2.1)*5, z=mid.z+(Math.floor(i/3)-0.5)*18+Math.cos(i*1.7)*5, y=Math.max(14,H-6+(i%3)*5);
+    const strG=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(6,-y-surfY(x,z),3)]);
+    k.add(new THREE.Line(strG,new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.55})));
+    k.scale.setScalar(2.2); k.position.set(x,y,z); g.add(k); ks.push({k,tail,x,y,z,ph:i*1.3}); });
+  narrate('Out over the fields, people were flying kites, and some of them were nearly as high as the treehouse.');
+  announce(['Kites! Lots of kites!','Hi, kite people!']); let t=0; lookToward(mid.clone().setY(H),-0.25);
+  return { update(dt){ t+=dt; for(const K of ks){ K.k.position.set(K.x+Math.sin(t*0.5+K.ph)*1.5,K.y+Math.sin(t*0.8+K.ph)*1.1,K.z+Math.cos(t*0.4+K.ph)); K.k.lookAt(camera.position); K.k.rotateZ(Math.sin(t*1.2+K.ph)*0.3);
+      K.tail.forEach((b,j)=>{ b.position.set(Math.sin(t*4+j*0.8+K.ph)*0.1*(j+1),-1.8-j*0.42,0); b.rotation.z=Math.sin(t*5+j)*0.6; }); }
+      return t<70&&camera.position.distanceTo(g.children[0].position)<900; }, fact:'kite', anchor:ks[1].k, dispose(){ scene.remove(g); } }; }
+function hotAir(){ const B=viewBasis(), g=new THREE.Group(); scene.add(g);
   const stripes=['#e2574c','#f2c230','#5b8fd0','#f3efe6'], env=new THREE.Group(); g.add(env);
   for(let i=0;i<12;i++){ const seg=new THREE.Mesh(new THREE.SphereGeometry(5,4,18,i/12*Math.PI*2,Math.PI*2/12),L(stripes[i%4],{side:THREE.DoubleSide})); seg.scale.y=1.25; env.add(seg); }
   const skirt=new THREE.Mesh(new THREE.CylinderGeometry(1.6,2.6,2.2,12,1,true),L('#e2574c',{side:THREE.DoubleSide})); skirt.position.y=-6.6; env.add(skirt);
@@ -2377,12 +2398,12 @@ function hotAir(){ const B=viewBasis(), g=new THREE.Group(); near.add(g);
   const pilot=new THREE.Group(); const ph=new THREE.Mesh(new THREE.SphereGeometry(0.32,12,10),L('#f2c7a5')); ph.position.y=0.25; pilot.add(ph);
   const hat=new THREE.Mesh(new THREE.SphereGeometry(0.34,12,8,0,Math.PI*2,0,Math.PI*0.5),L('#3b3550')); hat.position.y=0.32; pilot.add(hat);
   const arm=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.7,6),L('#5aa86a')); arm.position.set(0.35,0.35,0); pilot.add(arm); pilot.position.set(0,-9.3,0); g.add(pilot);
-  narrate('A hot-air balloon was out for an evening ride. Its pilot could hardly believe his eyes.');
-  announce(['A hot-air balloon!','It has a FIRE inside it!']); let t=0, burn=0;
-  const path=(tt,v)=>at(B,48,lerp(60,-60,tt/34),3+tt*0.15,v);
-  return { update(dt){ t+=dt; path(t,g.position); g.lookAt(camera.position.x,g.position.y+near.position.y,camera.position.z); env.rotation.y=t*0.05;
+  let t=0, burn=0, told=false; const base=at(B,95,30,42).applyQuaternion(qFrame).add(house.position), side=B.r.clone().applyQuaternion(qFrame);   /* placed out in the sky (not with the treehouse) while the cloud hides everything */
+  const path=(tt,v)=>v.copy(base).addScaledVector(side,-tt*0.9).addScaledVector(up,tt*0.06);
+  return { update(dt){ t+=dt; path(t,g.position); g.lookAt(camera.position.x,g.position.y,camera.position.z); env.rotation.y=t*0.05;
+      if(!told&&bankSaid===2&&quiet()){ told=true; lookToward(g.position,-0.2); narrate('A hot-air balloon was out for an evening ride. Its pilot could hardly believe his eyes.'); announce(['A hot-air balloon!','It has a FIRE inside it!']); }
       burn-=dt; if(burn<-3.5-Math.random()*3){ burn=1.1; Music.sfx('burner'); } flame.material.opacity=burn>0?0.9*(0.7+0.3*Math.sin(t*40)):0;
-      arm.rotation.z=-0.6+Math.sin(t*6)*0.6; return t<34; }, fact:'hotair', anchor:env, dispose(){ near.remove(g); } }; }
+      arm.rotation.z=-0.6+Math.sin(t*6)*0.6; return t<110; }, fact:'hotair', anchor:env, dispose(){ scene.remove(g); } }; }
 function weatherBalloon(){ const B=viewBasis(), g=new THREE.Group(); near.add(g);
   const b=new THREE.Mesh(new THREE.SphereGeometry(2.2,20,16),new THREE.MeshStandardMaterial({color:'#f6f3ee',roughness:0.4,transparent:true,opacity:0.92})); b.scale.y=1.15; g.add(b);
   const line=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,6,4),L('#ffffff')); line.position.y=-5.3; g.add(line);
@@ -2398,9 +2419,9 @@ function iss(night,line){ const B=viewBasis(), g=new THREE.Group(); near.add(g);
   [[0,0,0,1.1,6],[0,0,-4,0.9,3],[0,0,4,0.9,3]].forEach(([x,y,z,r,l])=>{ const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,l,14),body); m.rotation.x=Math.PI/2; m.position.set(x,y-1,z); g.add(m); });
   const win=new THREE.Mesh(new THREE.SphereGeometry(0.45,10,8),new THREE.MeshBasicMaterial({color:0xffe2a8})); win.position.set(0,-1,1.2); g.add(win);
   const blink=new THREE.Mesh(new THREE.SphereGeometry(0.3,8,6),new THREE.MeshBasicMaterial({color:0xff6f61})); blink.position.set(11,0.3,0); g.add(blink);
-  narrate(line?'The space station slid by overhead, its windows lit, with everyone on board asleep.':'The International Space Station came sailing past. Somebody inside was waving.');
-  announce(line||['Is that a SPACE STATION?','People live in there! Hi, astronauts!']); let t=0; const dur=30;
-  return { update(dt){ t+=dt; at(B,95,lerp(-70,130,t/dur),-14+Math.sin(t*0.2)*2,g.position); g.rotation.set(0.25,t*0.02,0.1); blink.visible=(t%1.4)<0.15; return t<dur; },
+  narrate('High in the black sky, the space station went sailing past.');
+  announce(line||['Is that the space station, way up there?','Hi, astronauts! We beat you to the Moon!']); let t=0; const dur=40;
+  return { update(dt){ t+=dt; at(B,150,lerp(-110,130,t/dur),34+Math.sin(t*0.2)*2,g.position); g.rotation.set(0.25,t*0.02,0.1); blink.visible=(t%1.4)<0.15; return t<dur; },
     fact:'iss', anchor:win, dispose(){ near.remove(g); } }; }
 const cometTex=alphaTex(128,(u,v)=>{ const d=Math.abs(v-0.5)*2, w=0.25+0.75*u; return Math.pow(Math.max(0,1-u),0.9)*Math.max(0,1-d/w); });
 function comet(){ const B=viewBasis(), g=new THREE.Group(); near.add(g);
@@ -2438,8 +2459,14 @@ const REMEMBER={
 };
 function rememberLine(){ const k=phaseKey(state.u); const opts=Object.keys(REMEMBER).filter(f=>found.includes(f)&&REMEMBER[f].at.includes(k)&&!rememberSaid.includes(f));
   if(!opts.length) return null; const f=opts[Math.floor(Math.random()*opts.length)]; rememberSaid.push(f); return REMEMBER[f].l; }
-let rememberSaid=[], lumiAgain=false;
-const SPOT_AGAIN=[[1,'June... that rock just giggled. Again!'],[0,'I know that giggle.'],[1,'Lumi? Is that you?'],[4,'...'],[4,'You came BACK!']];
+let rememberSaid=[], lumiAgain=false, lumiSub=0, lumiPeek=0;
+/* the peek: from her hiding place she leans out past the side of the rock for a moment, then ducks back */
+function updatePeek(dt){ if(!(lumiPeek>0&&lumiPeek<1)) return; lumiPeek=Math.min(1,lumiPeek+dt/2.6); const k=smooth(0,0.2,lumiPeek)*(1-smooth(0.62,0.8,lumiPeek));   /* out quickly, a look, and back in */
+  /* to the edge of the rock as the girls see it: just past its side, a little behind it */
+  const gx=(juneB.pos.x+pipB.pos.x)/2, gz=(juneB.pos.y+pipB.pos.y)/2, dx=BOULDER[0]-gx, dz=BOULDER[1]-gz, d=Math.hypot(dx,dz)||1, ux=dx/d, uz=dz/d;
+  const ex=BOULDER[0]-uz*1.95+ux*0.75, ez=BOULDER[1]+ux*1.95+uz*0.75, hx=BOULDER[0]+ux*2.4, hz=BOULDER[1]+uz*2.4;
+  lumiB.pos.set(lerp(hx,ex,k),lerp(hz,ez,k)); lumiB.y=groundY(lumiB.pos.x,lumiB.pos.y); lumiB.face=lumiB.faceT=faceTo([lumiB.pos.x,lumiB.pos.y],[gx,gz]); }
+const SPOT_AGAIN=[[1,'June... that rock just giggled. Again!'],[0,'I know that giggle.']], SPOT_AGAIN2=[[1,'Lumi? Is that you?'],[4,'...'],[4,'You came BACK!']];
 const MEET_AGAIN=[[4,'I saved all your footprints. Nobody stepped on a single one.'],[0,'Hi, Lumi! We missed you.'],[1,'We came to play again!'],[4,'I knew you would. I watched your treehouse every night.']];
 
 /* Dad's notes: he built this treehouse with Grandpa when he was eight, and he hid little notes in it. One turns up in each part of the trip. */
@@ -2468,26 +2495,29 @@ function updateNotes(dt){
 function resetTripMemory(){ notesThisTrip=[]; rememberSaid=[]; hideDadNote(); }
 
 /* a small favour: a little bird lands on the railing, and Pip shares her cookie crumbs */
-function birdFavour(){ const b=makeBird(); b.g.scale.setScalar(0.7); let t=0, phase=0;
-  const perch=new THREE.Vector3(0.95,0.98,2.42), from=new THREE.Vector3(14,6,10), away=new THREE.Vector3(-18,8,14);
-  playScript([[1,'June! A little bird landed on our railing!'],[0,'Shh. Don\'t scare it.'],[1,'Here, birdie. Cookie crumbs.'],[0,'It\'s eating them!'],[1,'Bye, birdie! Come and visit our house on the ground!']]); speakIn=20;
+let favourOn=false;
+function birdFavour(){ if(Math.random()<0.5) return {update:()=>false,dispose(){}};   /* only some evenings */
+  const b=makeBird(); b.g.scale.setScalar(0.3); let t=0, phase=0; const brown=L('#8a5a3c'); b.g.traverse(o=>{ if(o.isMesh&&o.material===birdMat) o.material=brown; });   /* a little bird, the size of a sparrow beside the girls */
+  const perch=new THREE.Vector3(2.4,0.905,1.5), from=new THREE.Vector3(16,6,4), away=new THREE.Vector3(18,9,-10);
+  favourOn=true; playScript([[1,'June! A little bird landed on our railing!'],[0,'Shh. Don\'t scare it.'],[1,'Here, birdie. Cookie crumbs.'],[0,'It\'s eating them!'],[1,'Bye, birdie! Come and visit our house on the ground!']]); speakIn=24;
   narrate('A small brown bird stopped on the railing for a rest, and Pip shared her cookie crumbs.');
-  goPose(pipB,[0.95,RAIL_IN-pipB.clear],'scoop',0); goPose(juneB,[-0.4,RAIL_IN-juneB.clear-0.1],'idle',0.6); Music.sfx('chirp');
+  [[juneB,0.85,'idle'],[pipB,2.05,'point']].forEach(([g,v,pose])=>{ const st=railStand(g,{side:1,v}); goPose(g,st.p,pose,faceTo(st.p,[2.4,1.5])); });   /* the girls go over to the side rail, either side of it, and Pip holds out the crumbs */
+  Music.sfx('chirp');
   return { update(dt){ t+=dt;
       if(t<3){ const k=smooth(0,3,t); b.g.position.lerpVectors(from,perch,k); b.g.lookAt(near.localToWorld(_q.copy(perch))); flapBirds([b],t); }
-      else if(t<16){ b.g.position.copy(perch); b.wr.rotation.z=b.wl.rotation.z=0; b.g.rotation.x=Math.max(0,Math.sin(t*5))*0.6; if(Math.random()<dt*0.5) Music.sfx('chirp'); }
-      else { if(phase===0){ phase=1; BRAINS.forEach(g=>{ g.hold=null; g.cur=null; g.queue.length=0; g.queue.push({k:'pose',pose:'wave',dur:4,face:0}); }); }
-        const k=smooth(16,21,t); b.g.position.lerpVectors(perch,away,k); b.g.rotation.x=0; flapBirds([b],t); }
-      return t<21; }, fact:'birds', anchor:b.g, dispose(){ near.remove(b.g); } }; }
+      else if(t<17){ if(phase===0){ phase=1; b.g.position.copy(perch); b.g.rotation.set(0,-Math.PI/2,0); b.wr.rotation.z=b.wl.rotation.z=0; b.wr.rotation.y=0.25; b.wl.rotation.y=-0.25; }   /* folded wings, facing the girls, perfectly still */
+        b.h.position.y=0.12+Math.max(0,Math.sin(t*3.2))*0.05; if(Math.random()<dt*0.4) Music.sfx('chirp'); }   /* only its head dips, pecking crumbs */
+      else { if(phase===1){ phase=2; b.wr.rotation.y=b.wl.rotation.y=0; BRAINS.forEach(g=>{ g.hold=null; g.cur=null; g.queue.length=0; g.queue.push({k:'pose',pose:'wave',dur:4,face:Math.PI/2}); }); }
+        const k=smooth(17,22,t); b.g.position.lerpVectors(perch,away,k); b.g.lookAt(near.localToWorld(_q.copy(away))); flapBirds([b],t); }
+      return t<22; }, fact:'birds', anchor:b.g, dispose(){ favourOn=false; near.remove(b.g); } }; }
 
 const EVENTS=[
-  {u:0.0025,fn:birdsAcross},{u:0.008,fn:kites},{u:0.016,fn:birdsCircle},{u:0.028,fn:birdFavour},{u:0.045,fn:hotAir},{u:0.1,fn:()=>plane(0)},{u:0.165,fn:()=>plane(1)},{u:0.2,fn:weatherBalloon},
-  {u:0.33,fn:()=>iss(0)},{u:0.44,fn:()=>ufo(0)},{u:0.53,fn:meteorShower},{u:0.64,fn:comet},{u:0.76,fn:()=>ufo(1)}
+  {u:0.0025,fn:birdsAcross},{u:0.008,fn:kites},{u:0.013,fn:birdsCircle},{u:0.02,fn:birdFavour},{u:0.1,fn:()=>plane(0)},{u:0.165,fn:()=>plane(1)},
+  {u:0.44,fn:()=>ufo(0)},{u:0.53,fn:meteorShower},{u:0.76,fn:()=>ufo(1)}
 ];
 const EVENTS_DOWN=[
   {u:0.72,fn:()=>ufo(0,['The UFO came to say goodbye!','Bye-bye, alien friend!'])},
   {u:0.5,fn:()=>meteorShower(['Shooting stars, all for us!','Goodnight wishes!'])},
-  {u:0.36,fn:()=>iss(1,['The space station again!','Its windows are lit up. Goodnight, astronauts!'])},
   {u:0.12,fn:()=>plane(0,['A night plane!','Its lights are blinking hello.'])}
 ];
 let activeEvents=[];
@@ -2497,7 +2527,7 @@ function updateEvents(dt,u){
   if(state.started&&!state.landed&&!state.returning&&!state.home) EVENTS.forEach(e=>{ if(!e.done&&u>=e.u){ e.wait=(e.wait||0)+dt; if((quiet()&&!activeEvents.length)||e.wait>20){ e.done=true; e.wait=0; activeEvents.push(e.fn()); } } });   /* each waits for a lull, but not for long */
   if(state.returning&&!state.finale) EVENTS_DOWN.forEach(e=>{ if(!e.done&&u<=e.u){ e.wait=(e.wait||0)+dt; if((quiet()&&!activeEvents.length)||e.wait>10){ e.done=true; e.wait=0; activeEvents.push(e.fn()); } } });
   activeEvents=activeEvents.filter(a=>{ const alive=a.update(dt); if(!alive) a.dispose(); return alive; });
-  updateSmoke(dt); updateButterflies(); updateCars(dt); settlePeaks(); updateNotes(dt);
+  updateSmoke(dt); updateButterflies(); updateCars(dt); settlePeaks();
   /* cloud bank: tint to the sky, whiten the air while inside, and let the girls notice */
   bankMat.color.copy(skyU.mid.value).lerp(new THREE.Color(0xffffff),0.55);
   bank.visible=u<0.3;
@@ -2509,7 +2539,7 @@ function updateEvents(dt,u){
   }
   else if(state.started&&!state.landed&&!state.home){
     if(bankSaid===0&&dy>-30){ bankSaid=1; narrate('A cloud as big as a town was waiting just overhead.'); announce(['Here comes a big cloud!','Hold your breath!']); }
-    else if(bankSaid===1&&dy>-3){ bankSaid=5; announce(['I\'m inside a cloud!','You\'re all damp now.']); }
+    else if(bankSaid===1&&dy>-3){ bankSaid=5; announce(['I\'m inside a cloud!','You\'re all damp now.']); activeEvents.push(hotAir()); }
     else if(bankSaid===5&&dy>18){ bankSaid=2; announce(['We made it through!','My hair is all fluffy now.']); }
   }
 }
@@ -2599,15 +2629,12 @@ const FACTS={
   bluesky:F('Blue sky',SKYK,'#4a9ae0','bluesky','Why the sky is blue','Sunlight is made of every color mixed together. The air scatters the blue part of sunlight all over the sky much more than the other colors, so wherever you look, you see blue.','On Mars it\'s the other way round: the daytime sky is a pinkish orange, and sunsets are blue!'),
   kite:F('Kites',VIS,'#ff6f61','kite','How kites fly','The wind pushes against a kite while its string holds it at a slant, so the air is pushed down and the kite is pushed up.','People in China were flying kites more than 2,000 years ago.'),
   hotair:F('Hot-air balloon',VIS,'#e2574c','hotair','Flying on hot air','A hot-air balloon has a burner that heats the air inside it. Hot air is lighter than cold air, so the balloon floats up. To come down, the pilot lets the air cool.','The first passengers in a hot-air balloon, in 1783, were a sheep, a duck and a rooster!'),
-  weatherballoon:F('Weather balloon',VIS,'#7a8aa8','wballoon','Balloons that check the weather','Twice every day, weather balloons are let go from hundreds of places around the world. Each carries a small box that measures the temperature, the wind and the air pressure as it rises.','In the thin air high up, the balloon swells bigger and bigger until it pops, often more than 30 km up. The little box floats back down on a parachute.'),
   iss:F('Space station',VIS,'#6f8fd0','iss','A home in space','The International Space Station is about as long as a football field. Astronauts live and work on it, about 400 km above Earth.','It goes all the way around Earth about every 90 minutes, so the crew sees about 16 sunrises and 16 sunsets every day!'),
-  comet:F('Comet',VIS,'#9fd8ff','comet','Dirty snowballs','A comet is a ball of ice, rock and dust. When it comes close to the Sun, some of the ice turns into gas, making a glowing tail millions of kilometres long.','A comet\'s tail always points away from the Sun, even when the comet is heading away from it.'),
   satellites:F('Satellites',SPACE,'#d9a441','satellite','Machines circling Earth','Thousands of satellites circle Earth. Some take pictures of the weather, some carry phone calls and TV, and some help maps know exactly where you are.','The Moon is a satellite too: a natural one. It has been circling Earth for billions of years.'),
   sun:F('The Sun',SPACE,'#ffb347','sun','Our star','The Sun is a star: a giant ball of glowing hot gas. It is so big that about a million Earths could fit inside it.','Sunlight takes about 8 minutes to reach Earth. Never look straight at the Sun, though. It can hurt your eyes.'),
   spin:F('Spinning Earth',SPACE,'#2f78b8','spin','Earth is spinning','Earth spins all the way around once a day. At the middle of the Earth, the ground is moving at about 1,670 km an hour, but we don\'t feel it because everything moves along with us.','Earth is also racing around the Sun at about 107,000 km an hour!'),
   tides:F('Tides',SPACE,'#5aa8e0','tides','The Moon pulls the sea','The Moon\'s gravity gently pulls on Earth\'s oceans and makes the water bulge. As Earth spins, beaches get a high tide and a low tide about twice a day.','The Moon is slowly drifting away from Earth, about 3.8 cm a year. That\'s about as fast as your fingernails grow.'),
   phases:F('Moon shapes',SPACE,'#d9d4ca','phases','Why the Moon changes shape','The Moon doesn\'t make its own light. It shines with sunlight, and as it travels around Earth we see different amounts of its sunny side. That\'s why it seems to change shape.','It takes about 29½ days to go from one full Moon to the next.'),
-  apollo:F('Moon lander',MOONK,'#d9a441','lander','Visitors long ago','Between 1969 and 1972, twelve astronauts walked on the Moon. Their landers stood on four legs, and the bottom half stayed behind when the astronauts flew home.','They left behind tools, flags, footprints, and even a family photo.'),
   craters:F('Craters',MOONK,'#77736d','crater','Why the Moon is bumpy','Craters are holes made when rocks from space crashed into the Moon. With no wind or rain to smooth them away, they stay for billions of years.','The biggest crater on the Moon is about 2,500 km across. That\'s wider than many countries!'),
   moondust:F('Moon dust',MOONK,'#8a867f','dust','Sharp, sticky dust','Moon dust is rock smashed into tiny bits by space rocks. With no wind or water to round it off, it stays sharp, and it sticks to everything.','Apollo astronauts said Moon dust smelled like burnt gunpowder once they brought it inside!')
 };
@@ -2639,7 +2666,6 @@ function renderBook(flip){
     $('bookToc').innerHTML=CHAPTERS_ORDER.map(ch=>{ const ks=FACT_ORDER.filter(k=>FACTS[k].kicker===ch);
       return `<div class="toc-group"><h4>${ch}</h4><div class="toc-list">${ks.map(k=>{ const f=FACTS[k], got=found.includes(k);
         return `<button type="button" class="toc-item${got?'':' locked'}" data-k="${k}" style="--tint:${f.tint}">${got?'<span class="toc-star" aria-hidden="true">★</span>':''}${f.label}</button>`; }).join('')}</div></div>`; }).join('');
-    $('bookToc').innerHTML+=`<div class="toc-group"><h4>Dad&rsquo;s notes &middot; ${mem.notes.length}/5</h4>${Object.keys(DAD_NOTES).map(k=>mem.notes.includes(k)?`<p class="toc-note">&ldquo;${DAD_NOTES[k]}&rdquo;</p>`:'').join('')||'<p class="toc-note locked">Dad hid five notes in the treehouse. None found yet.</p>'}</div>`;
     $('bookToc').querySelectorAll('.toc-item').forEach(b=>b.addEventListener('click',()=>{ bookMode='page'; bookKey=b.dataset.k; renderBook(true); }));
     $('bookPage').textContent='Contents'; $('bookPage').disabled=true;
     $('bookPrev').disabled=true; $('bookNext').disabled=false;
@@ -2733,15 +2759,12 @@ const MARKDEFS=[
   {k:'bluesky',at:(o,u)=>(!state.returning&&nightK<0.4&&u>0.11&&u<0.28)?(o.set(-0.62,0.3,0),'n'):false},
   {k:'kite',at:o=>eventAnchor('kite',o)},
   {k:'hotair',at:o=>eventAnchor('hotair',o)},
-  {k:'weatherballoon',at:o=>eventAnchor('weatherballoon',o)},
   {k:'iss',at:o=>eventAnchor('iss',o)},
-  {k:'comet',at:o=>eventAnchor('comet',o)},
   {k:'satellites',at:(o,u)=>(!state.landed&&u>0.3&&u<0.6)?(o.set(0.62,0.38,0),'n'):false},
   {k:'sun',at:(o,u)=>(!state.landed&&!state.returning&&u>0.25&&u<0.9)?(o.copy(house.position).addScaledVector(SUN_DIR,600),'w'):false},
   {k:'spin',at:(o,u)=>(!state.landed&&u>0.6&&u<0.86)?(o.set(-0.62,0.42,0),'n'):false},
   {k:'tides',at:(o,u)=>(!state.landed&&u>0.7&&u<0.92)?(o.set(0.62,0.22,0),'n'):false},
   {k:'phases',at:(o,u)=>(!state.returning&&u>0.0015&&u<=0.08)?sphereAnchor(moonSphere,o):false},
-  {k:'apollo',at:o=>{ if(!state.landed||!lander.visible) return false; lander.localToWorld(o.set(0,4.2,0)); return 'w'; }},
   {k:'craters',at:o=>state.landed?(o.set(0.6,0.46,0),'n'):false},
   {k:'moondust',at:o=>state.landed?(o.set(-0.62,0.36,0),'n'):false},
   {k:'flag',at:o=>{ const f=flags.find(f=>f.visible); if(!f||!state.landed) return false; f.getWorldPosition(o); o.addScaledVector(up,1.9); return 'w'; }}
@@ -2763,7 +2786,7 @@ function updateMarks(u,starA){
   placed.length=0;
   const minGap=paused?96:46;
   for(const m of MARKDEFS){ const w=MK[m.k]; let ok=false;
-    if(show){ const r=m.at(mv,u,starA);
+    if(show&&!found.includes(m.k)){ const r=m.at(mv,u,starA);   /* once a fact is in the book, its tag is gone */
       if(r){ let x,y; if(r==='n'){ x=mv.x; y=mv.y; ok=true; } else { mv.project(camera); x=mv.x; y=mv.y; ok=mv.z<1; }
         if(ok&&Math.abs(x)<0.9&&Math.abs(y)<0.86){ const px=(x*0.5+0.5)*innerWidth, py=(-y*0.5+0.5)*innerHeight;
           if(placed.some(p=>Math.abs(p[0]-px)<minGap&&Math.abs(p[1]-py)<36)) ok=false;
@@ -2783,31 +2806,41 @@ let prep=null;
 function goPose(b,p,pose,face){ b.cur=null; b.queue.length=0; b.hold=pose; b.target=p; b.queue.push(...stepsTo([b.pos.x,b.pos.y],b.zone,p),{k:'pose',pose,dur:1e9,face}); }
 function setPose(b,pose,face){ b.hold=pose; b.cur=null; b.queue.length=0; b.queue.push({k:'pose',pose,dur:1e9,face}); }
 function countdown(txt){ const el=$('countdown'); el.textContent=txt; el.classList.toggle('word',txt.length>2); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+/* The pre-flight check is its own little film. The camera pulls back from the balloons and holds on the treehouse for a few seconds, then
+   comes in on the girls on the porch. Each step waits until the line before it has been read and anyone walking has arrived, so the
+   checklist always plays in order and Pip only goes to the rope once June has asked her to. When June asks about the balloons the
+   camera goes up to them and travels slowly down the strings and ties back to the girls. Nothing else happens until the rope is untied
+   and the countdown is done. */
+/* a scripted scene is playing: nothing else may chime in */
+const sceneBusy=()=>!!prep||(state.landed&&!state.callHome&&(lumiStage===1||lumiStage===2||lumiStage===4));
+const arrived=b=>!!(b.cur&&b.cur.k==='pose'&&!b.queue.length);
+const PREP_HOLD=8.5;   /* seconds from Lift off to the first line: the pull-back, then a held wide shot */
 const PREP=[
-  [0.6, ()=>{ say(0,'Okay, Pip. Final check before liftoff!'); goPose(juneB,[-0.35,1.25],'idle',1.4); goPose(pipB,[0.95,1.35],'idle',-1.3); }],
-  [3.6, ()=>{ say(1,'Ready, Captain June!'); setPose(pipB,'hop',-1.3); }],
-  [6.0, ()=>{ setPose(pipB,'idle',-1.3); say(0,'Balloons?'); setPose(juneB,'look',0.9); }],
-  [7.8, ()=>{ say(1,'Fifty balloons, tied tight. Check!'); setPose(pipB,'look',-1.3); }],
-  [10.8,()=>{ setPose(juneB,'idle',1.4); setPose(pipB,'idle',-1.3); say(0,'Snacks for the trip?'); }],
-  [12.0,()=>{ goPose(juneB,[-1.6,1.75],'idle',1.65); }],
-  [12.6,()=>{ say(1,'Be right back!'); goPose(pipB,[0.3,-0.85],'inside',0); }],
-  [18.0,()=>{ goPose(pipB,[0.95,1.35],'hop',-1.3); }],
-  [22.6,()=>{ say(1,'Cookies! Check!'); }],
-  [25.0,()=>{ setPose(pipB,'idle',-1.3); say(0,'Flashlight?'); }],
-  [26.6,()=>{ say(1,'Check!'); setPose(pipB,'wave',-1.3); }],
-  [28.4,()=>{ setPose(pipB,'idle',-1.3); say(0,'Jackets?'); }],
-  [30.0,()=>{ say(1,'Um... we\'ll be fine. Check!'); setPose(pipB,'spin',0); }],
-  [32.8,()=>{ say(0,'Untie the rope, Pip!'); goPose(pipB,[1.2,RAIL_IN-pipB.clear],'scoop',0); }],
-  [37.4,()=>{ mooring.visible=false; say(1,'Rope untied!'); setPose(pipB,'hop',0); }],
-  [39.8,()=>{ say(0,'Everybody hold on!'); together([{pose:'lean',dur:1e9}],[-0.65,0.55]); BRAINS.forEach(b=>b.hold='lean'); }],
-  [42.6,()=>countdown('3')],[43.6,()=>countdown('2')],[44.6,()=>countdown('1')],
-  [45.6,()=>{ countdown('Liftoff!'); beginFlight(); }]
+  {go(){ goPose(juneB,[-0.35,1.25],'idle',1.4); goPose(pipB,[0.95,1.35],'idle',-1.3); }, until:()=>prep.t>=PREP_HOLD&&arrived(juneB)&&arrived(pipB)},
+  {go(){ prep.film=true; say(0,'Okay, Pip. Final check before liftoff!'); }, until:()=>quiet()},
+  {go(){ say(1,'Ready, Captain June!'); setPose(pipB,'hop',-1.3); }, until:()=>quiet()},
+  {go(){ setPose(pipB,'idle',-1.3); setPose(juneB,'look',0.9); say(0,'Balloons?'); prep.bal=0.0001; }, until:()=>quiet()},
+  {go(){ setPose(pipB,'look',-1.3); say(1,'Fifty balloons, tied tight. Check!'); }, until:()=>quiet()&&prep.bal>=1},
+  {go(){ prep.bal=0; setPose(juneB,'idle',1.4); setPose(pipB,'idle',-1.3); say(0,'Snacks for the trip?'); }, until:()=>quiet()},
+  {go(){ setPose(pipB,'scoop',-1.3); say(1,'Nine cookies, right here in my pocket. Check!'); }, until:()=>quiet()},
+  {go(){ setPose(pipB,'idle',-1.3); say(0,'Flashlight?'); }, until:()=>quiet()},
+  {go(){ setPose(pipB,'wave',-1.3); say(1,'Check!'); }, until:()=>quiet()},
+  {go(){ setPose(pipB,'idle',-1.3); say(0,'Jackets?'); }, until:()=>quiet()},
+  {go(){ setPose(pipB,'spin',0); say(1,'Um... we\'ll be fine. Check!'); }, until:()=>quiet()},
+  {go(){ setPose(pipB,'idle',-1.3); say(0,'Untie the rope, Pip!'); }, until:()=>quiet()},
+  {go(){ goPose(pipB,[1.2,RAIL_IN-pipB.clear],'scoop',0); prep.at=0; }, until:()=>{ if(arrived(pipB)) prep.at+=prep.dt; return prep.at>2.4; }},   /* she walks to the rope and works the knot loose */
+  {go(){ mooring.visible=false; setPose(pipB,'hop',0); say(1,'Rope untied!'); }, until:()=>quiet()},
+  {go(){ together([{pose:'lean',dur:1e9}],[-0.65,0.55]); BRAINS.forEach(b=>b.hold='lean'); say(0,'Everybody hold on!'); prep.cd=0; }, until:()=>quiet()},
+  {go(){ countdown('3'); prep.cd=0; }, until:()=>(prep.cd+=prep.dt)>1},
+  {go(){ countdown('2'); prep.cd=0; }, until:()=>(prep.cd+=prep.dt)>1},
+  {go(){ countdown('1'); prep.cd=0; }, until:()=>(prep.cd+=prep.dt)>1},
+  {go(){ countdown('Liftoff!'); beginFlight(); }, until:()=>true}
 ];
 function startPrep(){
   $('pauseBtn').hidden=false; $('bookBtn').hidden=false; Music.start(); Music.unlock(); keepAwake(); idle=0;
   const intro=$('intro'); intro.classList.add('gone'); setTimeout(()=>intro.hidden=true,1500);
   ['alt','rail','controls'].forEach(id=>$(id).classList.remove('hud-off'));
-  $('skipBtn').hidden=false; prep={t:0,i:0};
+  $('skipBtn').hidden=false; prep={t:0,i:-1,film:false,bal:0,at:0,cd:0};
   setTimeout(()=>{ if(prep) narrate('Every night June and Pip said goodnight to the Moon. Tonight they were going to visit it.'); },1400);
 }
 function beginFlight(){
@@ -2819,7 +2852,8 @@ function beginFlight(){
   together([{pose:'wave',dur:13+Math.random()*2}],[-0.65,0.55]);
 }
 function skipPrep(){ if(!prep) return; hushBubbles(); prep=null; countdown('Liftoff!'); beginFlight(); }
-function updatePrep(dt){ if(!prep) return; prep.t+=dt; while(prep&&prep.i<PREP.length&&prep.t>=PREP[prep.i][0]) PREP[prep.i++][1](); }
+function updatePrep(dt){ if(!prep) return; prep.t+=dt; prep.dt=dt; if(prep.bal>0&&prep.bal<1) prep.bal=Math.min(1,prep.bal+dt/9);
+  if(prep.i<0||PREP[prep.i].until()){ prep.i++; if(prep.i<PREP.length) PREP[prep.i].go(); } }
 
 /* ---------- Lumi, the real moon girl ---------- */
 const BOULDER=[6.9,9.7], LUMI_HIDE=[8.5,11.8];
@@ -2829,9 +2863,9 @@ const BOULDER=[6.9,9.7], LUMI_HIDE=[8.5,11.8];
 let moonT=0, lumiStage=0, lumiStageT=0, lumiHungryAt=0;
 const faceTo=(from,to)=>Math.atan2(to[0]-from[0],to[1]-from[1]);
 const ladderBusy=()=>ALL.some(b=>b.active&&(b.zone==='ladder'||(b.cur&&b.cur.k==='climb'&&b.cur.started)));
-function resetLumi(){ moonT=0; lumiStage=0; lumiStageT=0; lumiB.active=false; lumi.g.visible=false; lumiB.pos.set(999,999); lumiB.cur=null; lumiB.queue.length=0;
+function resetLumi(){ issSeen=false; lumiSub=0; lumiPeek=0; moonT=0; lumiStage=0; lumiStageT=0; lumiB.active=false; lumi.g.visible=false; lumiB.pos.set(999,999); lumiB.cur=null; lumiB.queue.length=0;
   lumiB.hold=null; lumiB.target=null; lumiB.zone='ground'; lumiB.holding=null; if(lumiB.handRock) lumiB.handRock.visible=false; }
-const SPOT_SCRIPT=[[1,'June... that rock just giggled.'],[0,'Rocks don\'t giggle, Pip.'],[1,'Hello? We can see your hair!'],[4,'...'],[4,'Um. Hi.']];
+const SPOT_SCRIPT=[[1,'June... that rock just giggled.'],[0,'Rocks don\'t giggle, Pip.']], SPOT_SCRIPT2=[[1,'Hello? We can see your hair!'],[4,'...'],[4,'Um. Hi.']];
 function meetScript(){ const saw=castles.some(c=>c.done)?'I watched you build a castle!':HOP.drawn?'I watched you hop on the extra-long squares!':'I watched you jump so high!';
   return [[4,'I\'m Lumi. I live here. On the Moon.'],[0,'You LIVE on the Moon?'],[4,'My whole life! Nobody ever visits, so I was hiding behind my rock.'],
     [1,'I\'m Pip! And this is my big sister, June.'],[4,saw],[0,'Do you want to play with us?'],[4,'Yes, please! I know where all the shiny rocks are.']]; }
@@ -2860,20 +2894,26 @@ const LUMI_TRIP={
     [[4,'It smells like... grass?'],[1,'That\'s what Earth smells like!']],
     [[4,'Are those your mom and dad?'],[1,'Yep! Wave!']]]
 };
+let issSeen=false;
 function updateLumi(dt){
   if(!state.landed||state.callHome) return;
   moonT+=dt; lumiStageT+=dt;
+  if(!issSeen&&moonT>40&&(lumiStage===0||lumiStage===3)&&quiet()&&!activeEvents.length){ issSeen=true; activeEvents.push(iss(0)); }   /* the space station crosses the Moon's black sky */
   if(lumiStage===0&&moonT>65&&!ladderBusy()){
     lumiStage=1; lumiStageT=0; lumiB.active=true; lumi.g.visible=true; lumiB.zone='ground'; lumiB.pos.set(LUMI_HIDE[0],LUMI_HIDE[1]); lumiB.y=groundY(LUMI_HIDE[0],LUMI_HIDE[1]);
-    lumiB.face=lumiB.faceT=faceTo(LUMI_HIDE,[3.5,6.5]); setPose(lumiB,'doorpeek',lumiB.face);
+    lumiB.face=lumiB.faceT=faceTo(LUMI_HIDE,[3.5,6.5]); setPose(lumiB,'idle',lumiB.face);
     HOP.claimed=null; castles.forEach(c=>{ if(c.claimed&&!c.g.visible) c.claimed=false; });
     goPose(juneB,[3.3,7.3],'idle',faceTo([3.3,7.3],BOULDER)); goPose(pipB,[4.8,6.4],'idle',faceTo([4.8,6.4],BOULDER));
-    lumiAgain=mem.lumi; hushBubbles(); playScript(mem.lumi?SPOT_AGAIN:SPOT_SCRIPT); narrate(mem.lumi?'Somebody up there had been waiting for them to come back.':'It turned out they were not the only ones up there.');
+    lumiAgain=mem.lumi; hushBubbles(); lumiSub=-1; narrate(mem.lumi?'Somebody up there had been waiting for them to come back.':'It turned out they were not the only ones up there.');
   }
-  else if(lumiStage===1&&lumiStageT>4&&!script.length&&quiet()){
-    lumiStage=2; lumiStageT=0; goPose(lumiB,[4.9,8.2],'wave',faceTo([4.9,8.2],[4,6.9])); playScript(mem.lumi?MEET_AGAIN:meetScript()); mem.lumi=true; saveMem();
+  else if(lumiStage===1){ updatePeek(dt);
+    if(lumiSub===-1&&((arrived(juneB)&&arrived(pipB))||lumiStageT>25)){ lumiSub=0; lumiStageT=0; playScript(lumiAgain?SPOT_AGAIN:SPOT_SCRIPT); }   /* once both girls are down by the rock */
+    if(lumiSub===0&&lumiStageT>1&&quiet()&&!script.length){ lumiSub=1; lumiPeek=0.0001; }   /* her head pops out from behind the rock... */
+    else if(lumiSub===1&&lumiPeek>=1){ lumiSub=2; playScript(lumiAgain?SPOT_AGAIN2:SPOT_SCRIPT2); }   /* ...and straight back in */
+    else if(lumiSub===2&&quiet()){ lumiStage=2; lumiStageT=0; lumiSub=0; goPose(lumiB,[4.9,8.2],'idle',faceTo([4.9,8.2],[4,6.9])); }   /* then she walks round the rock */
   }
-  else if(lumiStage===2&&!script.length&&quiet()){
+  else if(lumiStage===2&&lumiSub===0){ if(arrived(lumiB)&&lumiStageT>0.8){ lumiSub=1; playScript(mem.lumi?MEET_AGAIN:meetScript()); mem.lumi=true; saveMem(); } }
+  else if(lumiStage===2&&lumiSub===1&&!script.length&&quiet()){ lumiSub=0;
     lumiStage=3; lumiStageT=0; lumiHungryAt=moonT+130; narrate(lumiAgain?'Lumi had kept watch over their footprints the whole time they were gone.':'Her name was Lumi, and she had been hoping for visitors for a very long time.');
     ACTIVE().forEach(b=>{ b.hold=null; b.cur=null; b.queue.length=0; b.target=null; });
   }
@@ -2925,21 +2965,26 @@ const _fa=new THREE.Vector3(), _fg=new THREE.Vector3(), _fd=new THREE.Vector3(),
 function faceAt(i,out){ HEADS[i].getWorldPosition(out); return out.addScaledVector(up,0.2*HEADSZ[i]); }
 function midOf(list,out){ out.set(0,0,0); list.forEach(i=>{ faceAt(i,_fh); out.add(_fh); }); return out.multiplyScalar(1/list.length); }
 function filmScene(){
-  if(prep&&prep.t>2.2&&prep.t<41&&!(prep.t>12.2&&prep.t<23.4)) return {name:'prep',girls:[0,1],actors:null};
+  if(prep&&prep.film) return {name:'prep',girls:[0,1],actors:null};
   const down=juneB.zone==='ground'&&pipB.zone==='ground';
-  if(state.landed&&!state.callHome&&down&&(lumiStage===1||lumiStage===2)) return {name:'lumi',girls:[0,1],actors:[4],hidden:lumiStage===1||(lumiStageT<6&&lumiB.cur&&lumiB.cur.k==='walk')};
+  if(state.landed&&!state.callHome&&down&&(lumiStage===1||lumiStage===2)) return {name:'lumi',girls:[0,1],actors:[4],hidden:lumiStage===1||(lumiStage===2&&lumiSub===0)};
   if(state.landed&&!state.callHome&&down&&lumiStage===4) return {name:'hungry',girls:[0,1],actors:[4]};
   if(hs&&hs.phase==='hug') return {name:'hug',girls:lumiB.active?[0,1,4]:[0,1],actors:[2,3]};
   return null; }
 function chooseShot(S){
   const w=curLine?curLine.w:-1;
-  if(S.name==='prep'){ if(w!==0&&w!==1) return film.id||'two'; return 'ots-'+w; }   /* the sisters: over one girl's shoulder onto the other */
+  if(S.name==='prep'){ if(prep.bal>0) return 'balloons'; if(prep.i>=12) return 'two'; if(w!==0&&w!==1) return film.id||'two'; return 'ots-'+w; }   /* the sisters: over one girl's shoulder onto the other; the whole porch while Pip unties the rope */
   if(S.hidden) return 'through';   /* while Lumi is still hiding behind her boulder, the camera stays behind the girls */
   if(film.sceneT<3.6||w<0) return film.id&&film.sceneT>=3.6?film.id:'through';
   if(S.actors.includes(w)) return 'ots-girls';
   return 'ots-actor'; }
 function placeShot(S,id){
   const w=curLine?curLine.w:-1, P=film.p, L=film.l;
+  if(S.name==='prep'&&id==='balloons'){ /* up among the balloons, then slowly down the strings and the ties to the girls */
+    const k=smooth(0.05,1,prep.bal); midOf([0,1],_fg); _fs.set(0,0,1).applyQuaternion(qFrame); _fd.set(1,0,0).applyQuaternion(qFrame);
+    _fa.copy(house.position).addScaledVector(up,lerp(13.2,_fg.clone().sub(house.position).dot(up)+0.6,k)).addScaledVector(_fs,lerp(0.6,1.25,k));
+    P.copy(_fa).addScaledVector(_fs,lerp(5.2,3.4,k)).addScaledVector(_fd,lerp(-1.4,-0.6,k)).addScaledVector(up,lerp(-1.2,0.4,k));
+    L.copy(house.position).addScaledVector(up,lerp(12.6,_fg.clone().sub(house.position).dot(up),k)).addScaledVector(_fs,lerp(0,1.3,k)); return; }
   if(S.name==='prep'){ const other=id==='ots-0'?1:0, spk=1-other;
     if(id==='two'){ midOf([0,1],_fg); faceAt(0,_fa); faceAt(1,_fd); _fd.sub(_fa); _fd.addScaledVector(up,-_fd.dot(up)).normalize(); _fs.crossVectors(up,_fd);
       if(_fs.dot(_fh.set(0,0,1).applyQuaternion(qFrame))<0) _fs.negate(); P.copy(_fg).addScaledVector(_fs,3.1).addScaledVector(up,0.55); L.copy(_fg); return; }
@@ -2972,17 +3017,19 @@ function updateFilm(dt){
   let cut=false;
   if(key!==film.key){ film.key=key; const id=chooseShot(S); cut=id!==film.id&&film.id!==''; film.id=id; }
   placeShot(S,film.id);
-  if(film.k<0.02||(cut&&film.k>0.6)){ film.pos.copy(film.p); film.look.copy(film.l); }
+  if(film.k<0.02||(cut&&film.k>0.6&&film.id!=='two')){ film.pos.copy(film.p); film.look.copy(film.l); }
   else { const q=1-Math.exp(-2.6*dt); film.pos.lerp(film.p,q); film.look.lerp(film.l,q); }
   /* who everyone looks at: the speaker; while nobody speaks, the girls look at whoever they are meeting */
-  const w=curLine?curLine.w:-1; film.gaze=true;
-  if(w>=0) faceAt(w,film.gazeAt); else if(S.actors) midOf(S.actors,film.gazeAt); else midOf(S.girls,film.gazeAt); }
+  film.gaze=true; film.S=S; }
 /* turn a head toward film.gazeAt, on top of whatever pose it is in (called after the pose is applied) */
 const _gl=new THREE.Vector3();
-function gazeHead(b,g,i){ if(b.gz===undefined) b.gz=0; let want=0;
-  if(film.gaze&&film.k>0.3&&g.g.visible){ const w=curLine?curLine.w:-1;
-    if(w!==i){ g.g.updateMatrixWorld(); _gl.copy(film.gazeAt); g.g.worldToLocal(_gl); want=clamp(Math.atan2(_gl.x,_gl.z),-1.0,1.0); } }
-  b.gz=damp(b.gz,want,4,1/60); g.head.rotation.y+=b.gz; }
+const _gt=new THREE.Vector3();
+function gazeHead(b,g,i){ if(b.gz===undefined){ b.gz=0; b.gzT=performance.now(); } const now=performance.now(), dt=Math.min(0.1,(now-b.gzT)/1000); b.gzT=now; let want=0;
+  if(film.gaze&&film.k>0.3&&g.g.visible&&film.S){ const S=film.S, w=curLine?curLine.w:-1;
+    /* look at whoever is talking; while nobody is, the girls look at the person they are meeting, and that person looks at the girls. Never at yourself. */
+    if(w>=0&&w!==i) faceAt(w,_gt); else if(S.actors&&!S.actors.includes(i)) midOf(S.actors,_gt); else midOf(S.girls.filter(k=>k!==i).length?S.girls.filter(k=>k!==i):S.girls,_gt);
+    g.g.updateMatrixWorld(); g.g.worldToLocal(_gt); if(_gt.x*_gt.x+_gt.z*_gt.z>0.04) want=clamp(Math.atan2(_gt.x,_gt.z),-1.0,1.0); }
+  b.gz=damp(b.gz,want,3.2,dt); g.head.rotation.y+=b.gz; }
 
 /* ---------- loop ---------- */
 const up=new THREE.Vector3(), off=new THREE.Vector3(), target=new THREE.Vector3(), qFrame=new THREE.Quaternion(), qSway=new THREE.Quaternion(), eul=new THREE.Euler();
@@ -3007,7 +3054,7 @@ function frame(now){
   eul.set(Math.sin(time*0.53)*0.03*lift*motion,0,Math.sin(time*0.41)*0.035*lift*motion); qSway.setFromEuler(eul);
   house.quaternion.copy(qFrame).multiply(qSway);
   if(state.landed&&!marksPlaced){ marksPlaced=true; moonMarks.position.copy(house.position); moonMarks.quaternion.copy(house.quaternion); placeLander(); }
-  lander.visible=!!state.landed;
+
 
   /* balloons & strings */
   for(let i=0;i<NB;i++){ const b=balloons[i], ph=b.ph;
@@ -3042,8 +3089,7 @@ function frame(now){
   townLightMat.opacity=0.22+0.75*nightK; cityLightMat.opacity=0.2+0.78*nightK; cityMat.emissiveIntensity=0.25+0.95*nightK;
   lanternLight.intensity=dad.g.visible?1.7*nightK:0; porchLight.intensity=1.5*nightK;
   const starA=Math.max(smooth(0.1,0.32,u),nightK*0.9);
-  starLayers[0].material.opacity=starA*(0.75+0.25*Math.sin(time*1.3));
-  starLayers[1].material.opacity=starA*(0.75+0.25*Math.sin(time*1.7+2));
+  starLayers.forEach((s,L)=>{ const tw=0.5+0.5*Math.sin(time*(1.5+L*0.85)+L*1.9)*Math.sin(time*(0.37+L*0.21)+L); s.material.opacity=starA*(0.25+0.75*tw); });   /* four layers twinkling deeply and out of step */
   cloudMat.opacity=1-smooth(0.28,0.42,u); clouds.visible=cloudMat.opacity>0.01;
   { const fading=cloudMat.opacity<0.995; if(cloudMat.transparent!==fading){ cloudMat.transparent=fading; cloudMat.needsUpdate=true; } }
   cloudMat.emissive.set(0x3a2c44).lerp(new THREE.Color(0x14123a),Math.max(smooth(0.05,0.2,u),nightK));
@@ -3054,9 +3100,10 @@ function frame(now){
   updateEvents(dt,u);
 
   /* camera */
+  updateCamTurn(rawDt*(paused?0:1));
   const aspectBoost=camera.aspect<1?Math.pow(1/Math.max(0.42,camera.aspect),0.55):1;
   landT=damp(landT,(state.landed||state.home)?1:0,0.35,dt);
-  followK=damp(followK,hs&&hs.phase==='walk'?1:0,0.5,dt);
+  followK=damp(followK,hs&&hs.phase==='walk'?1:0,0.5,dt); if(followK<0.001) walkSmoothOn=false;
   /* before liftoff the camera sits close on the balloons; at liftoff it glides out to the usual view */
   introK=damp(introK,(state.started||prep)?0:1,0.75,rawDt); const ik=introK*introK*(3-2*introK);
   const r=lerp(rAt(u)*zoom*aspectBoost*(1+0.3*landT),5.6*Math.max(1,aspectBoost*0.7),ik);
@@ -3068,11 +3115,12 @@ function frame(now){
   target.copy(house.position).addScaledVector(up,lerp(3.6,-1.2,landT));
   if(ik>0.001) target.lerp(introT.copy(house.position).addScaledVector(up,12.2),ik);
   sun.position.copy(house.position).addScaledVector(SUN_DIR,110); sun.target.position.copy(house.position);
-  if(followK>0.001){ target.lerp(walkerCenter(walkers),followK); sun.target.position.copy(target); sun.position.copy(target).addScaledVector(SUN_DIR,110); }
+  if(followK>0.001){ walkerCenter(walkers); if(!walkSmoothOn){ walkSmooth.copy(walkers); walkSmoothOn=true; } else walkSmooth.lerp(walkers,1-Math.exp(-1.6*rawDt)); target.lerp(walkSmooth,followK); sun.target.position.copy(target); sun.position.copy(target).addScaledVector(SUN_DIR,110); }
   camera.position.copy(target).add(off);
   if(u<0.02&&camera.position.y<0.8) camera.position.y=0.8;
   updateFilm(rawDt*(paused?0:1)||0);
-  if(film.k>0.001){ const fk=film.k*film.k*(3-2*film.k); camera.position.lerp(film.pos,fk); target.lerp(film.look,fk); }
+  if(film.k>0.001){ const fk=film.k*film.k*(3-2*film.k); camera.position.lerp(film.pos,fk); target.lerp(film.look,fk);
+    if(state.landed||state.home){ const lc=house.worldToLocal(_cg.copy(camera.position)), gy=groundY(lc.x,lc.z)+0.7; if(lc.y<gy){ lc.y=gy; camera.position.copy(house.localToWorld(lc)); } } }   /* (never under the ground while it eases out) */
   camera.up.copy(up); camera.lookAt(target);
   sky.position.copy(camera.position);
   starLayers.forEach(s=>s.position.copy(camera.position));
