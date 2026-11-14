@@ -249,7 +249,9 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 .book .toc-item{display:inline-flex;align-items:center;gap:5px;padding:.38rem .72rem;border-radius:999px;font:700 .8rem/1 var(--ui);color:var(--book-ink);background:var(--paper-deep);border:2px solid var(--tint)}
 .book .toc-item.locked{color:var(--book-soft);background:transparent;border-style:dashed;border-color:rgba(58,37,64,.28)}
 .book .toc-item:hover{background:#fff;border-color:var(--tint)}
-.toc-star{color:#e8a920;font-size:.9rem}
+.toc-star{color:#e8a920;width:.95em;height:.95em;vertical-align:-.12em;margin-right:3px}
+.ix{width:1.15em;height:1.15em;display:block;margin:auto}
+.times{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;font-weight:600}   /* the × drawn by the system font: the bundled fonts draw it oddly on iPad */
 /* pages not found yet */
 .redact{display:block;height:.78em;margin:.5em 0;border-radius:6px;background:repeating-linear-gradient(90deg, rgba(58,37,64,.16) 0 18px, rgba(58,37,64,.1) 18px 26px)}
 .art.locked svg{filter:grayscale(1) brightness(.85) blur(1.2px);opacity:.55}
@@ -359,7 +361,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 <div class="controls hud-off" id="controls">
   <button id="againSmall" type="button" hidden>Fly again</button>
   <button id="skipBtn" type="button" hidden>Skip to liftoff</button>
-  <button id="paceBtn" type="button">Pace 1×</button>
+  <button id="paceBtn" type="button">Pace 1<span class="times">×</span></button>
   <button id="setBtn" type="button">Settings</button>
 </div>
 
@@ -461,7 +463,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
     <h3>The trip</h3>
     <div class="zone-row"><button id="backBtn" type="button">Back to the start</button><button id="resetBtn" type="button">Restart progress</button></div>
     <p>Back to the start leaves the trip and returns to the title page. Restart progress also forgets every fact found and everything the girls remember from earlier trips.</p>
-    <button class="zone-close" id="setClose" type="button" aria-label="Close the settings">✕</button>
+    <button class="zone-close" id="setClose" type="button" aria-label="Close the settings"><svg class="ix" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></button>
   </div>
 </div>
 
@@ -484,7 +486,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
         <button id="bookNext" type="button" aria-label="Next page">›</button>
       </div>
     </div>
-    <button class="book-close" id="bookClose" type="button" aria-label="Close the book">✕</button>
+    <button class="book-close" id="bookClose" type="button" aria-label="Close the book"><svg class="ix" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></button>
   </div>
 </div>
 
@@ -1855,7 +1857,7 @@ $('howBtn').addEventListener('click',()=>{ const sp=$('howto'); sp.classList.add
 $('skipBtn').addEventListener('click',()=>skipPrep());
 $('soundBtn').addEventListener('click',e=>{ const on=Music.toggle(); e.currentTarget.textContent=on?'Music on':'Music off'; e.currentTarget.setAttribute('aria-pressed',String(on)); });
 const PACES=[1,2,4];
-$('paceBtn').addEventListener('click',e=>{ state.pace=PACES[(PACES.indexOf(state.pace)+1)%PACES.length]; e.currentTarget.textContent='Pace '+state.pace+'×'; });
+$('paceBtn').addEventListener('click',e=>{ state.pace=PACES[(PACES.indexOf(state.pace)+1)%PACES.length]; e.currentTarget.innerHTML='Pace '+state.pace+'<span class="times">×</span>'; });
 /* the bucket and the souvenir pebbles appear only where the storybook card hides them, so nothing pops into view at touchdown */
 let propsHidden=[], propsCardT=0; const propP=new THREE.Vector3();
 function hideMoonProps(){ propsHidden=[bucket,...pebbles.filter(p=>!p.taken).map(p=>p.m)]; propsHidden.forEach(o=>o.visible=false); propsCardT=0; }
@@ -2691,7 +2693,7 @@ function renderBook(flip){
     setPageParts(true);
     $('bookToc').innerHTML=CHAPTERS_ORDER.map(ch=>{ const ks=FACT_ORDER.filter(k=>FACTS[k].kicker===ch);
       return `<div class="toc-group"><h4>${ch}</h4><div class="toc-list">${ks.map(k=>{ const f=FACTS[k], got=found.includes(k);
-        return `<button type="button" class="toc-item${got?'':' locked'}" data-k="${k}" style="--tint:${f.tint}">${got?'<span class="toc-star" aria-hidden="true">★</span>':''}${f.label}</button>`; }).join('')}</div></div>`; }).join('');
+        return `<button type="button" class="toc-item${got?'':' locked'}" data-k="${k}" style="--tint:${f.tint}">${got?'<svg class="toc-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill="currentColor"/></svg>':''}${f.label}</button>`; }).join('')}</div></div>`; }).join('');
     $('bookToc').querySelectorAll('.toc-item').forEach(b=>b.addEventListener('click',()=>{ bookMode='page'; bookKey=b.dataset.k; renderBook(true); }));
     $('bookPage').textContent='Contents'; $('bookPage').disabled=true;
     $('bookPrev').disabled=true; $('bookNext').disabled=false;
