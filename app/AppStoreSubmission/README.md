@@ -14,6 +14,8 @@ Ten for each size, in order. App Store Connect → your app → the version page
 | --- | --- | --- |
 | `iPhone-6.9-inch` | 1320 × 2868 | iPhone 6.9" Display (Apple scales it down for smaller iPhones) |
 | `iPhone-6.9-inch-1290x2796` | 1290 × 2796 | The same, in the other size Apple accepts for 6.9" |
+| `iPhone-6.3-inch-1206x2622` | 1206 × 2622 | iPhone 6.3" Display (the "iPhone with Dynamic Island" slot) |
+| `iPhone-6.1-inch-1179x2556` | 1179 × 2556 | iPhone 6.1" Display (the same slot's other size) |
 | `iPhone-6.5-inch-1284x2778` | 1284 × 2778 | iPhone 6.5" Display, if that's the slot App Store Connect shows |
 | `iPhone-6.5-inch-1242x2688` | 1242 × 2688 | iPhone 6.5" Display, the other accepted size |
 | `iPad-13-inch` | 2064 × 2752 | iPad 13" Display (scaled down for smaller iPads) |
