@@ -61,3 +61,8 @@ Paste each file into the field of the same name. All fit Apple's limits.
 - An App Preview video is optional and isn't included.
 
 The full step-by-step guide is in `../IOS_CHECKLIST.md`.
+
+## 4-Header-and-Search (optional)
+`Header-16x9-5244x2950.png` is one 16:9 PNG with no transparency. It works as both the product page header and the search results image.
+In App Store Connect, go to the version page → Product Page Information → **Header and Search Results**. Upload it as the header, then turn on **Use header asset in search results**.
+The treehouse sits in the safe center, so Apple's 21:9 (header) and 3:2 (search) crops both keep it whole. These images only show on iOS/iPadOS 27 and later. You can skip them; search then falls back to your screenshots.
