@@ -3040,6 +3040,7 @@ function updateFilm(dt){
   let cut=false;
   if(key!==film.key){ film.key=key; const id=chooseShot(S); cut=id!==film.id&&film.id!==''; if(film.id==='balloons'&&id!=='balloons'){ cut=false; film.glide=1; } film.id=id; }   /* out of the balloon shot the camera settles gently onto the girls, never jumps */
   placeShot(S,film.id);
+  if(camera.aspect<0.95&&film.id!=='balloons'){ const bo=Math.min(1.9,Math.pow(1/camera.aspect,0.75)); film.p.sub(film.l).multiplyScalar(bo).add(film.l); }   /* on a tall, narrow screen every filmed shot stands further back, so nobody is cut off at the sides */
   if(film.k<0.02||(cut&&film.k>0.6&&film.id!=='two')){ film.pos.copy(film.p); film.look.copy(film.l); }
   else { if(film.glide>0) film.glide=Math.max(0,film.glide-dt/2.5); const q=1-Math.exp(-(film.glide>0?1.2:2.6)*dt); film.pos.lerp(film.p,q); film.look.lerp(film.l,q); }
   /* who everyone looks at: the speaker; while nobody speaks, the girls look at whoever they are meeting */
