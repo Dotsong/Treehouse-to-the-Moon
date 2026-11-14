@@ -13,7 +13,13 @@ Ten for each size, in order. App Store Connect → your app → the version page
 | Folder | Size | App Store slot |
 | --- | --- | --- |
 | `iPhone-6.9-inch` | 1320 × 2868 | iPhone 6.9" Display (Apple scales it down for smaller iPhones) |
+| `iPhone-6.9-inch-1290x2796` | 1290 × 2796 | The same, in the other size Apple accepts for 6.9" |
+| `iPhone-6.5-inch-1284x2778` | 1284 × 2778 | iPhone 6.5" Display, if that's the slot App Store Connect shows |
+| `iPhone-6.5-inch-1242x2688` | 1242 × 2688 | iPhone 6.5" Display, the other accepted size |
 | `iPad-13-inch` | 2064 × 2752 | iPad 13" Display (scaled down for smaller iPads) |
+| `iPad-13-inch-2048x2732` | 2048 × 2732 | iPad 13" Display, the other accepted size |
+
+Upload ONE iPhone set and ONE iPad set: whichever size the page accepts.
 
 1. Slowdown Storytime title page
 2. The opening storybook card
