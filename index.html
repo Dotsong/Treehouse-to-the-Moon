@@ -361,7 +361,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
 <div class="controls hud-off" id="controls">
   <button id="againSmall" type="button" hidden>Fly again</button>
   <button id="skipBtn" type="button" hidden>Skip to liftoff</button>
-  <button id="paceBtn" type="button">Pace 1<span class="times">×</span></button>
+  <button id="paceBtn" type="button">Pace 1x</button>
   <button id="setBtn" type="button">Settings</button>
 </div>
 
@@ -481,9 +481,9 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
       <div class="wow" id="bookWow"><span id="bookWowLabel">Did you know?</span><p id="bookExtra"></p></div>
       <div class="toc" id="bookToc" hidden></div>
       <div class="book-nav">
-        <button id="bookPrev" type="button" aria-label="Previous page">‹</button>
+        <button id="bookPrev" type="button" aria-label="Previous page"><svg class="ix" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
         <button class="toc-btn" id="bookPage" type="button"></button>
-        <button id="bookNext" type="button" aria-label="Next page">›</button>
+        <button id="bookNext" type="button" aria-label="Next page"><svg class="ix" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
       </div>
     </div>
     <button class="book-close" id="bookClose" type="button" aria-label="Close the book"><svg class="ix" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></button>
@@ -1857,7 +1857,7 @@ $('howBtn').addEventListener('click',()=>{ const sp=$('howto'); sp.classList.add
 $('skipBtn').addEventListener('click',()=>skipPrep());
 $('soundBtn').addEventListener('click',e=>{ const on=Music.toggle(); e.currentTarget.textContent=on?'Music on':'Music off'; e.currentTarget.setAttribute('aria-pressed',String(on)); });
 const PACES=[1,2,4];
-$('paceBtn').addEventListener('click',e=>{ state.pace=PACES[(PACES.indexOf(state.pace)+1)%PACES.length]; e.currentTarget.innerHTML='Pace '+state.pace+'<span class="times">×</span>'; });
+$('paceBtn').addEventListener('click',e=>{ state.pace=PACES[(PACES.indexOf(state.pace)+1)%PACES.length]; e.currentTarget.textContent='Pace '+state.pace+'x'; });
 /* the bucket and the souvenir pebbles appear only where the storybook card hides them, so nothing pops into view at touchdown */
 let propsHidden=[], propsCardT=0; const propP=new THREE.Vector3();
 function hideMoonProps(){ propsHidden=[bucket,...pebbles.filter(p=>!p.taken).map(p=>p.m)]; propsHidden.forEach(o=>o.visible=false); propsCardT=0; }
