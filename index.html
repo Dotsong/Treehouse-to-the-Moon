@@ -321,7 +321,7 @@ h1{font-size:clamp(2.5rem, 8vw, 4.8rem)}
   -webkit-text-stroke:5px rgba(34,24,52,.92);paint-order:stroke fill;   /* a thick dark outline, drawn behind the letters, and a soft warm glow round the whole line */
   text-shadow:0 0 14px rgba(255,226,170,.6), 0 0 30px rgba(255,214,150,.38), 0 2px 5px rgba(10,8,30,.6);opacity:0;pointer-events:none;transition:opacity 1.3s ease, transform 1.3s ease}
 .narrator.show{opacity:1;transform:translate(-50%,0)}
-@media (max-width:640px){ .narrator{top:calc(86px + env(safe-area-inset-top, 0px));width:calc(100vw - 40px)} }
+@media (max-width:640px){ .narrator{top:calc(158px + env(safe-area-inset-top, 0px));width:calc(100vw - 40px)} }   /* on a phone, below the altitude and the two round buttons */
 /* phones and tablets only: there the stroke and wide glow wash over the small letters, so the outline is a ring of hard shadows sized to the letters and the glow is gentler */
 @media (max-width:640px),(pointer:coarse){ .narrator{-webkit-text-stroke:0;paint-order:normal;text-shadow:0.07em 0em 0 rgba(34,24,52,.95), -0.07em 0em 0 rgba(34,24,52,.95), 0em 0.07em 0 rgba(34,24,52,.95), 0em -0.07em 0 rgba(34,24,52,.95), 0.05em 0.05em 0 rgba(34,24,52,.95), -0.05em 0.05em 0 rgba(34,24,52,.95), 0.05em -0.05em 0 rgba(34,24,52,.95), -0.05em -0.05em 0 rgba(34,24,52,.95), 0.1em 0em 0 rgba(34,24,52,.95), -0.1em 0em 0 rgba(34,24,52,.95), 0em 0.1em 0 rgba(34,24,52,.95), 0em -0.1em 0 rgba(34,24,52,.95), 0.075em 0.075em 0 rgba(34,24,52,.95), -0.075em 0.075em 0 rgba(34,24,52,.95), 0.075em -0.075em 0 rgba(34,24,52,.95), -0.075em -0.075em 0 rgba(34,24,52,.95), 0 0 .5em rgba(255,226,170,.3)} }
 </style>
@@ -1988,7 +1988,7 @@ function updateSpeech(dt){
     if(filmed){ /* in a filmed moment a bubble is placed once per line and shot: just over its speaker, or in a bottom corner if she is out of the picture */
       const A=film.bubAt[i]||(film.bubAt[i]={x,y});
       if(freshB||!A.set){ const on=hp.z<1&&x>40&&x<innerWidth-40&&y>90&&y<innerHeight-40; A.set=true;
-        if(on){ A.x=x; A.y=Math.max(150,y-0.06*innerHeight); } else { A.x=i%2?innerWidth*0.7:innerWidth*0.3; A.y=innerHeight-60; } }
+        if(on){ A.x=x; A.y=Math.max(innerWidth<641?290:150,y-0.06*innerHeight); } else { A.x=i%2?innerWidth*0.7:innerWidth*0.3; A.y=innerHeight-60; } }
       x=A.x; y=A.y; hp.z=0; }
     else film.bubAt.length=0;
     xs[i]=x;

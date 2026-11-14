@@ -1,0 +1,10 @@
+Treehouse to the Moon is a calm story game for parents to read aloud with young children. There is nothing to win, no login, no purchases, no ads, no links out of the app and no data collection.
+
+How to see everything quickly:
+1. Tap "Open the story", then "Got it", then "Lift off!".
+2. "Skip to liftoff" (bottom right) skips the pre-flight check.
+3. "Pace" speeds the flight up to 2x or 4x.
+4. On the Moon, tap "Stay a while". After about a minute a moon girl, Lumi, appears. Later the girls get hungry and float home on their own, or tap "Float home for dinner" at any time.
+5. The round book button under the pause button opens the fact book. Settings (bottom right) has text size, music and Back to the start.
+
+The music is generated live by the app. The app works fully offline.

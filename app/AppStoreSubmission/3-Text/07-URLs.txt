@@ -1,0 +1,5 @@
+Support URL:
+https://github.com/Dotsong/Treehouse-to-the-Moon
+
+Privacy Policy URL (after GitHub Pages is turned on, and once the contact email in privacy.html is filled in):
+https://dotsong.github.io/Treehouse-to-the-Moon/privacy.html
