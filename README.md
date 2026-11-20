@@ -1,5 +1,7 @@
 # Treehouse to the Moon
 
+> **This is the `cel-style` branch:** the same game, rebuilt in the look of the Maleficium repo. Light falls in three hard bands, things carry a dark ink line, details are painted on in flat color, and June, Pip, Lumi, Mom and Dad are Maleficium's cel cast. The cel kit and the cast are spliced in from `tools/cel/` (see its README). `main` keeps the original look.
+
 A slow, dreamy 3D game with no obstacles. Two sisters, June and Pip, tie fifty birthday balloons to their treehouse and float it all the way to the Moon, then drift home at night in time for dinner.
 
 The whole game is a single file, `index.html`. Open it in a browser to play. It loads [three.js r128](https://cdnjs.com/libraries/three.js/r128) and two Google Fonts from the web; everything else, including the music, is generated in the page.
