@@ -36,7 +36,7 @@ In the left sidebar, click **App** (the blue project icon), then the **App** tar
 
 - **Signing & Capabilities**
   - **Team:** choose your Apple Developer account.
-  - **Bundle Identifier:** `com.dotsong.treehousetothemoon`, or your own reverse-domain ID. If you change it, change `appId` in `capacitor.config.json` to match.
+  - **Bundle Identifier:** `com.michellebrunk.treehousetothemoon`. This must match `appId` in `capacitor.config.json` and the bundle ID on the App Store Connect record exactly.
 - **General**
   - **Display Name:** Treehouse to the Moon.
   - **Supported Destinations:** iPhone and iPad.

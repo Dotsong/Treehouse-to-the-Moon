@@ -1,0 +1,61 @@
+Answers for the "Set up your app" tasks on the Play Console dashboard
+(Play Console → Treehouse to the Moon → Dashboard, or Policy → App content)
+
+PRIVACY POLICY
+  https://dotsong.github.io/Treehouse-to-the-Moon/privacy.html
+
+APP ACCESS
+  "All functionality in my app is available without any access restrictions"
+
+ADS
+  "No, my app does not contain ads"
+
+CONTENT RATING (IARC questionnaire)
+  Email: your developer email
+  Category: Game
+  Violence, fear, sexuality, language, controlled substances, crude humour: No to every question
+  Does the app let users interact or exchange content? No
+  Does the app share the user's location? No
+  Does the app allow purchases of digital goods? No
+  Does the app contain gambling? No
+  Expected result: Everyone / PEGI 3 / USK 0 and the equivalents
+
+TARGET AUDIENCE AND CONTENT
+  Target age groups: 5 and under, 6–8, 9–12
+  (Picking any age under 13 means the app follows Google Play's Families Policy. It already does: no ads, no data collection, no links out.)
+  Could the app unintentionally appeal to children? (only asked if no child ages are picked) n/a
+  Store presence / "Appeals to children": Yes
+
+NEWS APP
+  No
+
+DATA SAFETY
+  Does your app collect or share any of the required user data types? No
+  (The form then skips the data-type questions. The result on the store page reads "No data collected" and "No data shared with third parties".)
+  Is all of the user data collected by your app encrypted in transit? Not asked once you answer No above
+  Do you provide a way for users to request that their data is deleted? Not asked once you answer No above
+
+ADVERTISING ID
+  Does your app use advertising ID? No
+
+GOVERNMENT APP
+  No
+
+FINANCIAL FEATURES
+  "My app doesn't provide any financial features"
+
+HEALTH APPS
+  "My app does not have any health features"
+
+STORE SETTINGS
+  App or game: Game
+  Category: Educational
+  Tags (up to 5): Casual, Relaxing, Kids, Educational, Story
+  Contact email: your support email (shown on the store page)
+  Website (optional): leave blank, or https://github.com/Dotsong/Treehouse-to-the-Moon
+
+PRICING
+  Free or Paid: choose before the first release. A free app can never be changed to paid later.
+
+COUNTRIES
+  Production → Countries / regions → Add countries → choose all, or just the ones you want

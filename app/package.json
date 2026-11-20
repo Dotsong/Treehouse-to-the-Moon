@@ -2,17 +2,21 @@
   "name": "treehouse-to-the-moon",
   "version": "1.0.0",
   "private": true,
-  "description": "Treehouse to the Moon, packaged as an iPhone and iPad app with Capacitor.",
+  "description": "Treehouse to the Moon, packaged as an iPhone, iPad and Android app with Capacitor.",
   "scripts": {
     "build": "python3 ../tools/build-app.py",
-    "sync": "npm run build && npx cap sync ios",
-    "ios": "npm run sync && npx cap open ios"
+    "sync": "npm run build && npx cap sync",
+    "ios": "npm run build && npx cap sync ios && npx cap open ios",
+    "android": "npm run build && npx cap sync android && npx cap open android",
+    "android-icons": "npx @capacitor/assets generate --android --iconBackgroundColor '#2c2f7a' --iconBackgroundColorDark '#2c2f7a' --splashBackgroundColor '#0e0d2a' --splashBackgroundColorDark '#0e0d2a'"
   },
   "dependencies": {
     "@capacitor/core": "latest",
-    "@capacitor/ios": "latest"
+    "@capacitor/ios": "latest",
+    "@capacitor/android": "latest"
   },
   "devDependencies": {
-    "@capacitor/cli": "latest"
+    "@capacitor/cli": "latest",
+    "@capacitor/assets": "latest"
   }
 }
